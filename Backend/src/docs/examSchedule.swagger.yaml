@@ -1,0 +1,599 @@
+paths:
+  /exam-schedules:
+    post:
+      tags:
+        - Exam Schedule
+      summary: Create a new exam schedule
+      description: Create a new exam schedule. Only authenticated users can create schedules.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - exam_title
+                - start_datetime
+                - end_datetime
+                - exam_status
+                - exam_category
+                - exam_type
+              properties:
+                exam_title:
+                  type: string
+                  example: "Mathematics Final Exam"
+                  description: "Title of the exam schedule"
+                start_datetime:
+                  type: string
+                  format: date-time
+                  example: "2026-07-15T10:00:00Z"
+                  description: "Start date and time of the exam"
+                end_datetime:
+                  type: string
+                  format: date-time
+                  example: "2026-07-15T12:00:00Z"
+                  description: "End date and time of the exam (must be greater than start_datetime)"
+                exam_status:
+                  type: string
+                  enum: ["Active", "Inactive"]
+                  example: "Active"
+                  description: "Status of the exam"
+                exam_category:
+                  type: string
+                  enum: ["Abacus", "Vedic"]
+                  example: "Abacus"
+                  description: "Category of the exam"
+                exam_type:
+                  type: string
+                  enum: ["Mock", "Main Exam"]
+                  example: "Mock"
+                  description: "Type of the exam"
+                exam_level:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+                  description: "Array of level IDs"
+                exam_set:
+                  type: array
+                  items:
+                    type: integer
+                  example: [101, 102]
+                  description: "Array of set IDs"
+                exam_state:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2]
+                  description: "Array of state IDs"
+                exam_district:
+                  type: array
+                  items:
+                    type: integer
+                  example: [10, 11]
+                  description: "Array of district IDs"
+                exam_institute:
+                  type: array
+                  items:
+                    type: integer
+                  example: [5, 6]
+                  description: "Array of institute IDs"
+      responses:
+        201:
+          description: Exam schedule created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Exam Schedule created successfully"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "end_datetime must be greater than start_datetime"
+        401:
+          description: Unauthorized - JWT token missing or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthorized"
+        500:
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Failed to create exam schedule"
+
+    get:
+      tags:
+        - Exam Schedule
+      summary: Get all exam schedules
+      description: Retrieve all exam schedules with pagination, search, filter, and sort options. Only returns schedules created by the authenticated user.
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+          example: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+          description: Number of records per page (max 100)
+          example: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by exam_title (case-insensitive)
+          example: "Mathematics"
+        - name: exam_status
+          in: query
+          schema:
+            type: string
+            enum: ["Active", "Inactive"]
+          description: Filter by exam status
+          example: "Active"
+        - name: exam_category
+          in: query
+          schema:
+            type: string
+            enum: ["Abacus", "Vedic"]
+          description: Filter by exam category
+          example: "Abacus"
+        - name: exam_type
+          in: query
+          schema:
+            type: string
+            enum: ["Mock", "Main Exam"]
+          description: Filter by exam type
+          example: "Mock"
+      responses:
+        200:
+          description: Exam schedules retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Exam Schedules retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        exam_title:
+                          type: string
+                          example: "Mathematics Final Exam"
+                        start_datetime:
+                          type: string
+                          format: date-time
+                          example: "2026-07-15T10:00:00Z"
+                        end_datetime:
+                          type: string
+                          format: date-time
+                          example: "2026-07-15T12:00:00Z"
+                        exam_status:
+                          type: string
+                          example: "Active"
+                        exam_category:
+                          type: string
+                          example: "Abacus"
+                        exam_type:
+                          type: string
+                          example: "Mock"
+                        exam_level:
+                          type: array
+                          items:
+                            type: integer
+                          example: [1, 2, 3]
+                        exam_set:
+                          type: array
+                          items:
+                            type: integer
+                          example: [101, 102]
+                        exam_state:
+                          type: array
+                          items:
+                            type: integer
+                          example: [1, 2]
+                        exam_district:
+                          type: array
+                          items:
+                            type: integer
+                          example: [10, 11]
+                        exam_institute:
+                          type: array
+                          items:
+                            type: integer
+                          example: [5, 6]
+                        created_by:
+                          type: integer
+                          example: 1
+                        created_at:
+                          type: string
+                          format: date-time
+                        updated_at:
+                          type: string
+                          format: date-time
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 25
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      pages:
+                        type: integer
+                        example: 3
+        401:
+          description: Unauthorized - JWT token missing or invalid
+        500:
+          description: Server error
+
+  /exam-schedules/{id}:
+    get:
+      tags:
+        - Exam Schedule
+      summary: Get exam schedule by ID
+      description: Retrieve a specific exam schedule. Only returns if the record was created by the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Exam schedule ID
+          example: 1
+      responses:
+        200:
+          description: Exam schedule retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Exam Schedule retrieved successfully"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      exam_title:
+                        type: string
+                        example: "Mathematics Final Exam"
+                      start_datetime:
+                        type: string
+                        format: date-time
+                      end_datetime:
+                        type: string
+                        format: date-time
+                      exam_status:
+                        type: string
+                        enum: ["Active", "Inactive"]
+                      exam_category:
+                        type: string
+                        enum: ["Abacus", "Vedic"]
+                      exam_type:
+                        type: string
+                        enum: ["Mock", "Main Exam"]
+                      exam_level:
+                        type: array
+                        items:
+                          type: integer
+                      exam_set:
+                        type: array
+                        items:
+                          type: integer
+                      exam_state:
+                        type: array
+                        items:
+                          type: integer
+                      exam_district:
+                        type: array
+                        items:
+                          type: integer
+                      exam_institute:
+                        type: array
+                        items:
+                          type: integer
+                      created_by:
+                        type: integer
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        404:
+          description: Exam schedule not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Exam Schedule not found"
+        401:
+          description: Unauthorized
+        500:
+          description: Server error
+
+    put:
+      tags:
+        - Exam Schedule
+      summary: Update exam schedule
+      description: Update an existing exam schedule. Only the creator can update it.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exam_title:
+                  type: string
+                  example: "Mathematics Final Exam Updated"
+                start_datetime:
+                  type: string
+                  format: date-time
+                  example: "2026-07-15T10:00:00Z"
+                end_datetime:
+                  type: string
+                  format: date-time
+                  example: "2026-07-15T12:00:00Z"
+                exam_status:
+                  type: string
+                  enum: ["Active", "Inactive"]
+                  example: "Active"
+                exam_category:
+                  type: string
+                  enum: ["Abacus", "Vedic"]
+                exam_type:
+                  type: string
+                  enum: ["Mock", "Main Exam"]
+                exam_level:
+                  type: array
+                  items:
+                    type: integer
+                exam_set:
+                  type: array
+                  items:
+                    type: integer
+                exam_state:
+                  type: array
+                  items:
+                    type: integer
+                exam_district:
+                  type: array
+                  items:
+                    type: integer
+                exam_institute:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        200:
+          description: Exam schedule updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Exam Schedule updated successfully"
+                  data:
+                    type: object
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+        404:
+          description: Exam schedule not found
+        401:
+          description: Unauthorized
+        500:
+          description: Server error
+
+    delete:
+      tags:
+        - Exam Schedule
+      summary: Delete exam schedule
+      description: Delete an exam schedule. Only the creator can delete it.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        200:
+          description: Exam schedule deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Exam Schedule deleted successfully"
+        404:
+          description: Exam schedule not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Exam Schedule not found"
+        401:
+          description: Unauthorized
+        500:
+          description: Server error
+
+  /exam-schedules/export:
+    get:
+      tags:
+        - Exam Schedule
+      summary: Export exam schedules
+      description: Export exam schedules in JSON or CSV format. Only exports schedules created by the authenticated user.
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: ["json", "csv"]
+            default: "json"
+          description: Export format
+          example: "csv"
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by exam_title
+        - name: exam_status
+          in: query
+          schema:
+            type: string
+            enum: ["Active", "Inactive"]
+          description: Filter by exam status
+        - name: exam_category
+          in: query
+          schema:
+            type: string
+            enum: ["Abacus", "Vedic"]
+          description: Filter by exam category
+        - name: exam_type
+          in: query
+          schema:
+            type: string
+            enum: ["Mock", "Main Exam"]
+          description: Filter by exam type
+      responses:
+        200:
+          description: Export successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Export successful"
+                  data:
+                    type: array
+                    items:
+                      type: object
+            text/csv:
+              schema:
+                type: string
+                format: binary
+                example: "id,exam_title,start_datetime,end_datetime,exam_status,exam_category,exam_type,created_by,created_at,updated_at\n1,\"Mathematics Final Exam\",\"2026-07-15 10:00:00\",\"2026-07-15 12:00:00\",\"Active\",\"Abacus\",\"Mock\",1,\"2026-07-02 10:00:00\",\"2026-07-02 10:00:00\"\n"
+        400:
+          description: Invalid format parameter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Format must be 'json' or 'csv'"
+        401:
+          description: Unauthorized
+        500:
+          description: Server error

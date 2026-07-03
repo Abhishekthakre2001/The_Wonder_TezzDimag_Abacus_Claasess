@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Sidebar from "../Components/Sidebar";
-import Calender from '../Components/Calender';
+import ExamScheduleList from '../Components/ExamScheduleList';
 
 export default function Examschedule() {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -19,7 +19,7 @@ export default function Examschedule() {
                px-2 md:px-8 py-6 mb-12
              `}
             >
-                <Calender />
+                <ExamScheduleList />
             </main>
         </>
     )

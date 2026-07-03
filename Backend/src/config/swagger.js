@@ -10,6 +10,7 @@ module.exports = swaggerJsdoc({
     }
   },
   apis: [
+    path.join(__dirname, "../docs/examSchedule.swagger.yaml"),
     path.join(__dirname, "../docs/index.swagger.yaml"),
     path.join(__dirname, "../docs/users.swagger.yaml"),
     path.join(__dirname, "../docs/questions.swagger.yaml"),
@@ -21,5 +22,6 @@ module.exports = swaggerJsdoc({
     path.join(__dirname, "../docs/state.swagger.yaml"),
     path.join(__dirname, "../docs/district.swagger.yaml"),
     path.join(__dirname, "../docs/institute.swagger.yaml"),
+    path.join(__dirname, "../docs/examSchedule.swagger.yaml"),
   ]
 });

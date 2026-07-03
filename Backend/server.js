@@ -8,6 +8,7 @@ const corsConfig = require("./src/middlewares/corsConfig");
 const userRoutes = require("./src/routes/UserRoutes");
 const levelRoutes = require("./src/routes/LevelRoutes");
 const examschedule = require("./src/routes/ExamScheduleRoutes");
+const examScheduleRoutes = require("./src/routes/examSchedule.routes");
 const setRoutes = require("./src/routes/SetRoutes");
 const resultRoutes = require("./src/routes/ResultRoutes");
 const adminsetting = require("./src/routes/AdminSettingRoutes");
@@ -67,6 +68,7 @@ if (cluster.isMaster) {
   app.use("/levels", levelRoutes);
   app.use("/sets", setRoutes);
   app.use("/exam-schedule", examschedule);
+  app.use("/exam-schedules", examScheduleRoutes);
   app.use("/results", resultRoutes);
   app.use("/exam-results", ExamResultRoutes);
   app.use("/admin-settings", adminsetting);
