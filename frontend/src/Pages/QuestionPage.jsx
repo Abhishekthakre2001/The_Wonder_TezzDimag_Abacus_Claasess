@@ -68,6 +68,7 @@ export default function QuestionPage() {
         duration: updatedPaper.duration,
         paper_type: updatedPaper.paper_type,
         status: updatedPaper.status,
+        paper_category: updatedPaper.question_paper_type,
       });
 
       await reload();
@@ -163,6 +164,21 @@ export default function QuestionPage() {
       key: "paper_type",
       label: "Paper Type",
     },
+    {
+  key: "question_paper_type",
+  label: "Question Paper Category",
+  render: (value) => (
+    <span
+      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+        value === "Vedic"
+          ? "bg-purple-100 text-purple-700"
+          : "bg-blue-100 text-blue-700"
+      }`}
+    >
+      {value}
+    </span>
+  ),
+},
     {
       key: "status",
       label: "Status",

@@ -303,8 +303,6 @@ export default function AddStudent() {
                         value={formData.dob}
                         onChange={handleChange("dob")}
                         error={errors.dob}
-                        showError={!!errors.dob}
-                        error={errors.dob}
                         showError={!!errors.dob} required
                     />
 

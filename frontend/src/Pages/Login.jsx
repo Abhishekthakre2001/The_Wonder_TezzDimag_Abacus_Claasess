@@ -29,65 +29,36 @@ const Login = () => {
     try {
       const res = await userApi.login({ username, password });
 
-      const {
-        accessToken,
-        refreshToken,
-        refreshTokenExpiry,
-        user,
-      } = res.data;
+      console.log("login user", res.data.accessToken);
 
-      // clear old data
-      localStorage.clear();
-      sessionStorage.clear();
+      const { token, user } = res.data;
+
       // clear old data
       localStorage.clear();
       sessionStorage.clear();
 
       if (rememberMe) {
-        // Access Token
-        localStorage.setItem("token", accessToken);
-
-        // User
+        // ✅ persistent login
+        localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-
-        // Refresh Token
-        localStorage.setItem("refreshToken", refreshToken);
-
-        // Expiry
-        localStorage.setItem(
-          "refreshTokenExpiry",
-          refreshTokenExpiry
-        );
-
         localStorage.setItem("isremeber", "true");
       } else {
-        // Access Token
-        sessionStorage.setItem("token", accessToken);
-
-        // User
+        // ✅ session-only login
+        sessionStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-
-        // Refresh Token
-        sessionStorage.setItem("refreshToken", refreshToken);
-
-        // Expiry
-        sessionStorage.setItem(
-          "refreshTokenExpiry",
-          refreshTokenExpiry
-        );
-
+        sessionStorage.setItem("user", JSON.stringify(user));
         sessionStorage.setItem("isremeber", "false");
       }
+
       // role based redirect AFTER login
       if (user.usertype.toLowerCase() === "student") {
         navigate("/student-dashboard");
-      }if(user.usertype.toLowerCase() === "superadmin"){
-        navigate("/superadmin");
       } else {
         navigate("/dashboard");
       }
 
-
+      localStorage.setItem("token", res.data.accessToken);
+      sessionStorage.setItem("token", res.data.accessToken);
 
 
     } catch (err) {

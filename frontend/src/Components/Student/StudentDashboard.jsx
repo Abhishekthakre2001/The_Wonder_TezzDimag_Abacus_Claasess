@@ -24,6 +24,8 @@ export default function StudentDashboard() {
   const [liveExamId, setLiveExamId] = useState(null);
   const [LiveExamSet, setLiveExamSet] = useState(null);
   const [LiveExamLevel, SetLiveExamLevel] = useState(null);
+  const [levelsetloading, setLevelsetLoading] = useState(true);
+  const [levelwise_set, setLevelwiseSet] = useState([]);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const userName =
@@ -82,15 +84,15 @@ export default function StudentDashboard() {
   console.log("LiveExamSet", LiveExamSet)
   console.log("LiveExamLevel", LiveExamLevel)
 
-  const { data: levelwise_set, levelsetloading } = useFetchData(() =>
-    questionApi.getset(user.level, user.createdby),
-  );
+  // const { data: levelwise_set, levelsetloading } = useFetchData(() =>
+  //   questionApi.getset(user.level, user.createdby),
+  // );
 
-  useEffect(() => {
-    if (levelwise_set?.length > 0 && levelwise_set[0]?.level_name) {
-      localStorage.setItem("Userlevl", levelwise_set[0].level_name);
-    }
-  }, [levelwise_set]);
+  // useEffect(() => {
+  //   if (levelwise_set?.length > 0 && levelwise_set[0]?.level_name) {
+  //     localStorage.setItem("Userlevl", levelwise_set[0].level_name);
+  //   }
+  // }, [levelwise_set]);
 
 
   /* ================= DATE HELPERS ================= */

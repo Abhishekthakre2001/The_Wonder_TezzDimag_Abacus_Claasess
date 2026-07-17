@@ -70,28 +70,56 @@ const ExamScheduleForm = ({
   );
 
   const { data: instituteData } = useFetchData(
-    () =>examScheduleApi.getInstitutes(),
+    () => examScheduleApi.getInstitutes(),
     { preserveResponse: true }
   );
 
+  // const { data: paperData } = useFetchData(
+  //   () =>
+  //     formData.exam_level && formData.exam_set
+  //       ? examScheduleApi.getQuestionPapers(formData.exam_level, formData.exam_set)
+  //       : Promise.resolve({ data: [] }),
+  //   [formData.exam_level, formData.exam_set],
+  //   { preserveResponse: true }
+  // );
   const { data: paperData } = useFetchData(
     () =>
-      formData.exam_level && formData.exam_set
-        ? examScheduleApi.getQuestionPapers(formData.exam_level, formData.exam_set)
-        : Promise.resolve({ data: [] }),
-    [formData.exam_level, formData.exam_set],
+      formData.exam_level &&
+        formData.exam_set &&
+        formData.exam_category &&
+        formData.exam_type
+        ? examScheduleApi.getQuestionPapers({
+          question_paper_type: formData.exam_category,
+          level_id: formData.exam_level,
+          set_id: formData.exam_set,
+          paper_type: formData.exam_type?.toUpperCase(),
+        })
+        : Promise.resolve({ data: { records: [] } }),
+    [
+      formData.exam_category,
+      formData.exam_type,
+      formData.exam_level,
+      formData.exam_set,
+    ],
     { preserveResponse: true }
   );
 
   // ==========================================
   // Populate form when editing
   // ==========================================
+
+  const formatDateTimeLocal = (date) => {
+    if (!date) return "";
+    return new Date(date).toISOString().slice(0, 16);
+  };
+
+
   useEffect(() => {
     if (editingData) {
       setFormData({
         exam_title: editingData.exam_title || "",
-        start_datetime: editingData.start_datetime || "",
-        end_datetime: editingData.end_datetime || "",
+        start_datetime: formatDateTimeLocal(editingData.start_datetime),
+        end_datetime: formatDateTimeLocal(editingData.end_datetime),
         exam_status: editingData.exam_status || "Active",
         exam_category: editingData.exam_category || "",
         exam_type: editingData.exam_type || "",
@@ -135,7 +163,7 @@ const ExamScheduleForm = ({
     label: item.name,
   }));
 
-  console.log("instituteData",instituteData)
+  console.log("editingData", editingData)
 
   const instituteOptions = (instituteData || [])
     .map(item => ({
@@ -324,6 +352,7 @@ const ExamScheduleForm = ({
         exam_type: formData.exam_type,
         exam_level: formData.exam_level,
         exam_set: formData.exam_set,
+        exam_paper_id: formData.exam_paper_id,
         exam_state: formData.exam_state,
         exam_district: formData.exam_district,
         exam_institute: formData.exam_institute,
@@ -425,7 +454,14 @@ const ExamScheduleForm = ({
         <SelectField
           label="Exam Category"
           value={formData.exam_category}
-          onChange={(e) => handleSelectChange("exam_category", e)}
+          // onChange={(e) => handleSelectChange("exam_category", e)}
+          onChange={(e) => {
+            setFormData(prev => ({
+              ...prev,
+              exam_category: e.target.value,
+              exam_paper_id: "",
+            }));
+          }}
           onBlur={() => setTouched(prev => ({ ...prev, exam_category: true }))}
           options={categoryOptions}
           error={errors.exam_category}
@@ -436,7 +472,14 @@ const ExamScheduleForm = ({
         <SelectField
           label="Exam Type"
           value={formData.exam_type}
-          onChange={(e) => handleSelectChange("exam_type", e)}
+          // onChange={(e) => handleSelectChange("exam_type", e)}
+          onChange={(e) => {
+            setFormData(prev => ({
+              ...prev,
+              exam_type: e.target.value,
+              exam_paper_id: "",
+            }));
+          }}
           onBlur={() => setTouched(prev => ({ ...prev, exam_type: true }))}
           options={typeOptions}
           error={errors.exam_type}
@@ -453,6 +496,13 @@ const ExamScheduleForm = ({
           </label>
           <SelectField
             value={formData.exam_level}
+            // onChange={(e) => {
+            //   setFormData(prev => ({
+            //     ...prev,
+            //     exam_level: e.target.value,
+            //     exam_paper_id: "",
+            //   }));
+            // }}
             onChange={(e) => {
               setFormData(prev => ({
                 ...prev,
@@ -473,6 +523,13 @@ const ExamScheduleForm = ({
           </label>
           <SelectField
             value={formData.exam_set}
+            // onChange={(e) => {
+            //   setFormData(prev => ({
+            //     ...prev,
+            //     exam_set: e.target.value,
+            //     exam_paper_id: "",
+            //   }));
+            // }}
             onChange={(e) => {
               setFormData(prev => ({
                 ...prev,
@@ -493,17 +550,21 @@ const ExamScheduleForm = ({
         label="Question Paper"
         value={formData.exam_paper_id}
         onChange={(e) => handleSelectChange("exam_paper_id", e)}
-        onBlur={() => setTouched(prev => ({ ...prev, exam_paper_id: true }))}
         options={paperOptions}
         placeholder={
-          !formData.exam_level || !formData.exam_set
-            ? "Select Level & Set first"
-            : "Select question paper..."
+          !formData.exam_category ||
+            !formData.exam_type ||
+            !formData.exam_level ||
+            !formData.exam_set
+            ? "Select Category, Type, Level & Set first"
+            : "Select Question Paper"
         }
-        error={errors.exam_paper_id}
-        showError={touched.exam_paper_id}
-        disabled={!formData.exam_level || !formData.exam_set}
-        required
+        disabled={
+          !formData.exam_category ||
+          !formData.exam_type ||
+          !formData.exam_level ||
+          !formData.exam_set
+        }
       />
 
       {/* State & District & Institute */}

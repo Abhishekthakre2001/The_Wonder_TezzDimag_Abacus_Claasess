@@ -45,6 +45,37 @@ exports.getQuestionPapers = async (req, res) => {
 
 };
 
+
+// Get filtered active question papers
+exports.getFilteredQuestionPapers = async (req, res) => {
+    try {
+        const {
+            question_paper_type,
+            level_id,
+            set_id,
+            paper_type
+        } = req.query;
+
+        const data = await QuestionPaperService.getFilteredQuestionPapers({
+            question_paper_type,
+            level_id,
+            set_id,
+            paper_type
+        });
+
+        res.json({
+            success: true,
+            records: data
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+
 // Get questions by paper
 exports.getQuestionsByPaper = async (req, res) => {
 
@@ -80,6 +111,8 @@ exports.getQuestionsByPaper = async (req, res) => {
 
 // Update paper
 exports.updateQuestionPaper = async (req, res) => {
+
+    console.log("req received update q")
     try {
         await QuestionPaperService.updateQuestionPaper(
             req.params.id,

@@ -584,6 +584,18 @@ export default function AddUpdateQuestion() {
               setPaper({ ...paper, status: e.target.value })
             }
           />
+
+           <SelectField
+            label="Paper Category"
+            options={[
+              { label: "Vedic", value: "Vedic" },
+              { label: "Abacus", value: "Abacus" },
+            ]}
+            value={paper.paper_category}
+            onChange={(e) =>
+              setPaper({ ...paper, paper_category: e.target.value })
+            }
+          />
         </div>
 
         {/* ACTION BUTTONS */}

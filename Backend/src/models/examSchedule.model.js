@@ -22,13 +22,14 @@ const ExamScheduleModel = {
         exam_type,
         exam_level,
         exam_set,
+        exam_paper_id,
         exam_state,
         exam_district,
         exam_institute,
         created_by,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
 
     const [result] = await pool.query(sql, [
@@ -40,6 +41,7 @@ const ExamScheduleModel = {
       data.exam_type,
       JSON.stringify(data.exam_level || []),
       JSON.stringify(data.exam_set || []),
+      data.exam_paper_id,
       JSON.stringify(data.exam_state || []),
       JSON.stringify(data.exam_district || []),
       JSON.stringify(data.exam_institute || []),
@@ -49,12 +51,7 @@ const ExamScheduleModel = {
     return result;
   },
 
-  /**
-   * Find exam schedule by ID (check ownership)
-   * @param {number} id - Exam schedule ID
-   * @param {number} userId - User ID for ownership check
-   * @returns {Promise} Exam schedule record or null
-   */
+
   findById: async (id, userId) => {
     const sql = `
       SELECT * FROM exam_schedules 
@@ -65,17 +62,7 @@ const ExamScheduleModel = {
     return rows[0] || null;
   },
 
-  /**
-   * Find all exam schedules with pagination, search, filter, and sort
-   * @param {number} userId - User ID to get their records
-   * @param {number} limit - Records per page
-   * @param {number} offset - Pagination offset
-   * @param {string} search - Search by exam_title
-   * @param {string} examStatus - Filter by exam_status
-   * @param {string} examCategory - Filter by exam_category
-   * @param {string} examType - Filter by exam_type
-   * @returns {Promise} Array of exam schedules
-   */
+
   findAll: async (userId, limit, offset, search = "", examStatus = "", examCategory = "", examType = "") => {
     let sql = "SELECT * FROM exam_schedules WHERE created_by = ?";
     const params = [userId];
@@ -112,15 +99,7 @@ const ExamScheduleModel = {
     return rows;
   },
 
-  /**
-   * Count total exam schedules with filters
-   * @param {number} userId - User ID
-   * @param {string} search - Search term
-   * @param {string} examStatus - Status filter
-   * @param {string} examCategory - Category filter
-   * @param {string} examType - Type filter
-   * @returns {Promise} Total count
-   */
+
   countAll: async (userId, search = "", examStatus = "", examCategory = "", examType = "") => {
     let sql = "SELECT COUNT(*) as total FROM exam_schedules WHERE created_by = ?";
     const params = [userId];
@@ -149,13 +128,7 @@ const ExamScheduleModel = {
     return rows[0].total;
   },
 
-  /**
-   * Update exam schedule
-   * @param {number} id - Exam schedule ID
-   * @param {number} userId - User ID for ownership check
-   * @param {Object} data - Updated data
-   * @returns {Promise} Query result
-   */
+
   update: async (id, userId, data) => {
     const sql = `
       UPDATE exam_schedules 
@@ -168,6 +141,7 @@ const ExamScheduleModel = {
         exam_type = ?,
         exam_level = ?,
         exam_set = ?,
+        exam_paper_id  = ?,
         exam_state = ?,
         exam_district = ?,
         exam_institute = ?,
@@ -184,6 +158,7 @@ const ExamScheduleModel = {
       data.exam_type,
       JSON.stringify(data.exam_level || []),
       JSON.stringify(data.exam_set || []),
+      data.exam_paper_id,
       JSON.stringify(data.exam_state || []),
       JSON.stringify(data.exam_district || []),
       JSON.stringify(data.exam_institute || []),
@@ -194,27 +169,14 @@ const ExamScheduleModel = {
     return result;
   },
 
-  /**
-   * Delete exam schedule
-   * @param {number} id - Exam schedule ID
-   * @param {number} userId - User ID for ownership check
-   * @returns {Promise} Query result
-   */
+
   delete: async (id, userId) => {
     const sql = "DELETE FROM exam_schedules WHERE id = ? AND created_by = ?";
     const [result] = await pool.query(sql, [id, userId]);
     return result;
   },
 
-  /**
-   * Export exam schedules (for CSV export)
-   * @param {number} userId - User ID
-   * @param {string} search - Search term
-   * @param {string} examStatus - Status filter
-   * @param {string} examCategory - Category filter
-   * @param {string} examType - Type filter
-   * @returns {Promise} Array of all records matching criteria
-   */
+
   export: async (userId, search = "", examStatus = "", examCategory = "", examType = "") => {
     let sql = "SELECT * FROM exam_schedules WHERE created_by = ?";
     const params = [userId];
@@ -244,6 +206,32 @@ const ExamScheduleModel = {
     const [rows] = await pool.query(sql, params);
     return rows;
   },
+
+
+  getUpcomingAndLiveExams: async (userId) => {
+  const sql = `
+    SELECT
+        *,
+        CASE
+            WHEN NOW() BETWEEN start_datetime AND end_datetime
+                THEN 'LIVE'
+            WHEN NOW() < start_datetime
+                THEN 'UPCOMING'
+        END AS remark
+    FROM exam_schedules
+    WHERE created_by = ?
+      AND exam_status = 'Active'
+      AND (
+            NOW() BETWEEN start_datetime AND end_datetime
+            OR NOW() < start_datetime
+          )
+    ORDER BY start_datetime ASC
+  `;
+
+  const [rows] = await pool.query(sql, [userId]);
+
+  return rows;
+},
 };
 
 module.exports = ExamScheduleModel;

@@ -27,6 +27,7 @@ export default function UpdateQuestionModal({
         duration: "",
         paper_type: "",
         status: "ACTIVE",
+        question_paper_type: "Abacus",
     });
 
     useEffect(() => {
@@ -39,6 +40,7 @@ export default function UpdateQuestionModal({
                 duration: question.duration || "",
                 paper_type: question.paper_type || "",
                 status: question.status || "ACTIVE",
+                question_paper_type: question.question_paper_type || "Abacus",
             });
         }
     }, [question]);
@@ -93,6 +95,7 @@ export default function UpdateQuestionModal({
                 />
 
                 <SelectField
+                    name="level_id"
                     label="Level"
                     value={form.level_id}
                     onChange={handleChange}
@@ -104,6 +107,7 @@ export default function UpdateQuestionModal({
                 />
 
                 <SelectField
+                    name="set_id"
                     label="Set"
                     value={form.set_id}
                     onChange={handleChange}
@@ -173,6 +177,32 @@ export default function UpdateQuestionModal({
                         },
                     ]}
                 />
+
+                <SelectField
+                    label="Question Paper Type"
+                    value={form.question_paper_type}
+                    onChange={(e) =>
+                        handleChange({
+                            target: {
+                                name: "question_paper_type",
+                                value: e.target.value,
+                            },
+                        })
+                    }
+                    placeholder="Select Question Paper Type"
+                    options={[
+                        {
+                            value: "Abacus",
+                            label: "Abacus",
+                        },
+                        {
+                            value: "Vedic",
+                            label: "Vedic",
+                        },
+                    ]}
+                />
+
+
                 <div className="flex justify-end gap-3 pt-4">
                     <button
                         onClick={onClose}

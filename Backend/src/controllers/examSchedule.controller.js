@@ -1,16 +1,5 @@
 const ExamScheduleService = require("../services/examSchedule.service");
 
-/**
- * Exam Schedule Controller
- * Handles HTTP requests for exam schedule endpoints
- */
-
-/**
- * POST /exam-schedules
- * Create a new exam schedule
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
 exports.createExamSchedule = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -42,12 +31,7 @@ exports.createExamSchedule = async (req, res) => {
   }
 };
 
-/**
- * GET /exam-schedules
- * Get all exam schedules with pagination, search, filter, and sort
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+
 exports.getExamSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -70,13 +54,7 @@ exports.getExamSchedules = async (req, res) => {
   }
 };
 
-/**
- * GET /exam-schedules/:id
- * Get single exam schedule by ID
- * Only returns if created_by matches logged in user
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+
 exports.getExamScheduleById = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -109,13 +87,7 @@ exports.getExamScheduleById = async (req, res) => {
   }
 };
 
-/**
- * PUT /exam-schedules/:id
- * Update exam schedule
- * Only updates if record belongs to logged in user
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+
 exports.updateExamSchedule = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -156,13 +128,7 @@ exports.updateExamSchedule = async (req, res) => {
   }
 };
 
-/**
- * DELETE /exam-schedules/:id
- * Delete exam schedule
- * Only deletes if record belongs to logged in user
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+
 exports.deleteExamSchedule = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -191,13 +157,7 @@ exports.deleteExamSchedule = async (req, res) => {
   }
 };
 
-/**
- * GET /exam-schedules/export
- * Export exam schedules in JSON or CSV format
- * Query parameters: format (json|csv), search, exam_status, exam_category, exam_type
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+
 exports.exportExamSchedules = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -243,6 +203,27 @@ exports.exportExamSchedules = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to export exam schedules",
+    });
+  }
+};
+
+exports.getUpcomingAndLiveExams = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const data = await ExamScheduleService.getUpcomingAndLiveExams(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Exam schedules fetched successfully",
+      data,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch exam schedules",
     });
   }
 };

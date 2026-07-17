@@ -14,6 +14,9 @@ router.post("/import", controller.importQuestions);
 // Get all question papers (only logged-in user data)
 router.get("/", controller.getQuestionPapers);
 
+// Get active question papers by filters
+router.get("/filter", controller.getFilteredQuestionPapers);
+
 // Get questions of a paper
 router.get("/:id/questions", controller.getQuestionsByPaper);
 

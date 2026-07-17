@@ -69,9 +69,9 @@ export default function ExamScheduleList() {
   // Table Columns with Custom Renderers
   // ==========================================
   const columns = [
-    { 
-      key: "exam_title", 
-      label: "Exam Title" 
+    {
+      key: "exam_title",
+      label: "Exam Title"
     },
     {
       key: "start_datetime",
@@ -88,23 +88,22 @@ export default function ExamScheduleList() {
       label: "Status",
       render: (value) => (
         <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            value === "Active"
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${value === "Active"
               ? "bg-green-100 text-green-800"
               : "bg-gray-100 text-gray-800"
-          }`}
+            }`}
         >
           {value}
         </span>
       ),
     },
-    { 
-      key: "exam_category", 
-      label: "Category" 
+    {
+      key: "exam_category",
+      label: "Category"
     },
-    { 
-      key: "exam_type", 
-      label: "Type" 
+    {
+      key: "exam_type",
+      label: "Type"
     },
   ];
 
@@ -138,6 +137,7 @@ export default function ExamScheduleList() {
   };
 
   const handleOpenEdit = (row) => {
+    console.log("row", row)
     setEditingRow(row);
     setModalOpen(true);
   };

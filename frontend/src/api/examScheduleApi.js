@@ -43,13 +43,27 @@ const examScheduleApi = {
 
   getInstitutes: (districtId) => axiosInstance.get(`/institute`),
 
-  getQuestionPapers: (level_ids = [], set_ids = []) => {
-    const params = new URLSearchParams();
-    if (level_ids.length > 0) params.append("level_ids", level_ids.join(","));
-    if (set_ids.length > 0) params.append("set_ids", set_ids.join(","));
+  // getQuestionPapers: (level_ids = [], set_ids = []) => {
+  //   const params = new URLSearchParams();
+  //   if (level_ids.length > 0) params.append("level_ids", level_ids.join(","));
+  //   if (set_ids.length > 0) params.append("set_ids", set_ids.join(","));
 
-    return axiosInstance.get("/questions", { params });
-  },
+  //   return axiosInstance.get("/questions", { params });
+  // },
+  getQuestionPapers: ({
+    question_paper_type,
+    level_id,
+    set_id,
+    paper_type,
+  }) =>
+    axiosInstance.get("/questions/filter", {
+      params: {
+        question_paper_type,
+        level_id,
+        set_id,
+        paper_type,
+      },
+    }),
 
   // ==========================================
   // Legacy Endpoints (Keep for compatibility)
@@ -61,7 +75,7 @@ const examScheduleApi = {
 
   // student exam schedule
   getstudnetupcomeingexam: (level, adminid) =>
-    axiosInstance.get(`/exam-schedule/studentexam?level=${level}&createdby=${adminid}`),
+    axiosInstance.get(`/exam-schedule/upcoming-live`),
 
   // is exam live
   getLiveExam: (level, adminid) =>

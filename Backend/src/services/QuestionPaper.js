@@ -1,6 +1,11 @@
 const QuestionPaperModel = require("../models/QuestionPaper");
 
 module.exports = {
+
+    getFilteredQuestionPapers: (filters) =>
+    QuestionPaperModel.getFilteredQuestionPapers(filters),
+
+    
     importQuestions: (data) =>
         QuestionPaperModel.importQuestions(data),
 

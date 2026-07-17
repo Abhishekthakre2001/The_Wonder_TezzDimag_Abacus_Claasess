@@ -12,18 +12,18 @@ const QuestionPaperModel = {
 
             const [paper] = await conn.query(
                 `INSERT INTO question_papers
-                (paper_name, level_id, set_id, duration, total_questions, negative_marking, paper_type, status, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?)`,
-                [
-                    data.paper_name,
-                    data.level_id,
-                    data.set_id,
-                    data.duration,
-                    data.questions.length,
+                (question_paper_type, paper_name, level_id, set_id, duration, total_questions, negative_marking, paper_type, status, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?)`,
+                [data.paper_category,
+                data.paper_name,
+                data.level_id,
+                data.set_id,
+                data.duration,
+                data.questions.length,
                     0,
-                    data.paper_type,
-                    data.status,
-                    data.created_by
+                data.paper_type,
+                data.status,
+                data.created_by
                 ]
             );
 
@@ -173,11 +173,13 @@ const QuestionPaperModel = {
 
     // UPDATE PAPER
     updateQuestionPaper: async (id, data, userId) => {
+        console.log("req", data)
         const [result] = await pool.query(
             `UPDATE question_papers
-             SET paper_name=?, level_id=?, set_id=?, duration=?, paper_type=?, status=?
+             SET question_paper_type=?, paper_name=?, level_id=?, set_id=?, duration=?, paper_type=?, status=?
              WHERE id=? AND created_by=?`,
             [
+                data.paper_category,
                 data.paper_name,
                 data.level_id,
                 data.set_id,
@@ -558,7 +560,58 @@ const QuestionPaperModel = {
         }
 
         doc.end();
-    }
+    },
+
+    // GET ACTIVE QUESTION PAPERS BY FILTERS
+    getFilteredQuestionPapers: async (filters) => {
+
+        let where = `WHERE qp.status = 'ACTIVE'`;
+        const params = [];
+
+        if (filters.question_paper_type) {
+            where += ` AND qp.question_paper_type = ?`;
+            params.push(filters.question_paper_type);
+        }
+
+        if (filters.level_id) {
+            where += ` AND qp.level_id = ?`;
+            params.push(filters.level_id);
+        }
+
+        if (filters.set_id) {
+            where += ` AND qp.set_id = ?`;
+            params.push(filters.set_id);
+        }
+
+        if (filters.paper_type) {
+            where += ` AND qp.paper_type = ?`;
+            params.push(filters.paper_type);
+        }
+
+        const [rows] = await pool.query(
+            `SELECT
+            qp.id,
+            qp.paper_name,
+            qp.question_paper_type,
+            qp.level_id,
+            qp.set_id,
+            qp.paper_type,
+            qp.duration,
+            qp.total_questions,
+            l.level_name,
+            s.set_name
+        FROM question_papers qp
+        LEFT JOIN levels l
+            ON l.id = qp.level_id
+        LEFT JOIN sets s
+            ON s.id = qp.set_id
+        ${where}
+        ORDER BY qp.paper_name ASC`,
+            params
+        );
+
+        return rows;
+    },
 };
 
 module.exports = QuestionPaperModel;
