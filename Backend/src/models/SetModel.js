@@ -65,4 +65,60 @@ module.exports = {
     pool.query("UPDATE sets SET set_name=? WHERE id=?", [data.set_name, id]),
 
   remove: (id) => pool.query("DELETE FROM sets WHERE id = ?", [id]),
+
+  getStudentSets: async (createdby, level) => {
+    // Step 1: Get level id
+    const [levelRows] = await pool.query(
+      `
+    SELECT id
+    FROM levels
+    WHERE level = ?
+      AND createdby = ?
+    LIMIT 1
+    `,
+      [level, createdby]
+    );
+
+    if (levelRows.length === 0) {
+      return [[]];
+    }
+
+    const levelId = levelRows[0].id;
+
+    console.log("levelId",levelId)
+
+    // Step 2: Get unique set_ids from question_papers
+    const [paperRows] = await pool.query(
+      `
+    SELECT DISTINCT set_id
+    FROM question_papers
+    WHERE level_id = ?
+      AND created_by = ?
+    `,
+      [levelId, createdby]
+    );
+
+    console.log("paperRows",paperRows)
+
+    if (paperRows.length === 0) {
+      return [[]];
+    }
+
+    // Extract set ids
+    const setIds = paperRows.map((row) => row.set_id);
+
+    // Step 3: Get sets from sets table
+    const placeholders = setIds.map(() => "?").join(",");
+
+    return pool.query(
+      `
+    SELECT id, set_name
+    FROM sets
+    WHERE createdby = ?
+      AND id IN (${placeholders})
+    ORDER BY set_name ASC
+    `,
+      [createdby, ...setIds]
+    );
+  },
 };

@@ -75,7 +75,7 @@ const examScheduleApi = {
 
   // student exam schedule
   getstudnetupcomeingexam: (level, adminid) =>
-    axiosInstance.get(`/exam-schedule/upcoming-live`),
+    axiosInstance.get(`/exam-schedules/upcoming-live`),
 
   // is exam live
   getLiveExam: (level, adminid) =>

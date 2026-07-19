@@ -209,9 +209,11 @@ exports.exportExamSchedules = async (req, res) => {
 
 exports.getUpcomingAndLiveExams = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.createdby;
 
     const data = await ExamScheduleService.getUpcomingAndLiveExams(userId);
+
+    // console.log("Data:", data);
 
     res.status(200).json({
       success: true,

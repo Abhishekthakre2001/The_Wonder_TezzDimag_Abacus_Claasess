@@ -116,6 +116,7 @@ exports.loginUser = async (req, res) => {
       {
         id: user.id,
         username: user.username,
+        level:user.level,
         usertype: user.usertype,
         createdby: user.createdby,
       },

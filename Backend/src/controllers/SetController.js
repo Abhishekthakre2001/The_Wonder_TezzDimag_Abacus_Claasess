@@ -60,3 +60,25 @@ exports.remove = async (req, res) => {
   await SetModel.remove(req.params.id);
   res.json({ success: true });
 };
+
+exports.getStudentSets = async (req, res) => {
+  try {
+    // console.log("req.user",req.user)
+    const createdby = req.user.createdby;
+    const level = req.user.level;
+
+    console.log("created by",createdby , " and level ", level)
+
+    const [rows] = await SetModel.getStudentSets(createdby, level);
+
+    res.json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

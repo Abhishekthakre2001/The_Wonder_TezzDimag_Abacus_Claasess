@@ -289,6 +289,8 @@ const ExamScheduleService = {
 
 
   getUpcomingAndLiveExams: async (userId) => {
+
+    console.log("userId",userId)
   const exams = await ExamScheduleModel.getUpcomingAndLiveExams(userId);
 
   return exams.map((exam) => ({
