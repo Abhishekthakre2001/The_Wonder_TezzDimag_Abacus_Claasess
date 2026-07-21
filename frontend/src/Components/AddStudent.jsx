@@ -45,7 +45,7 @@ export default function AddStudent() {
         subscription_end_date: "",
         status: 1,
         usertype: "student",
-
+        student_category: "",
         state_id: "",
         district_id: "",
         city: "",
@@ -61,6 +61,11 @@ export default function AddStudent() {
         title: "",
         message: ""
     });
+
+    const categoryOptions = [
+        { value: "Abacus", label: "Abacus" },
+        { value: "Vedic", label: "Vedic" },
+    ];
 
     // ---------------- API LOAD ----------------
 
@@ -170,7 +175,7 @@ export default function AddStudent() {
             usertype: "student",
             createdby: user.id,
             status: formData.status,
-
+            student_category: formData.student_category,
             state_id: formData.state_id,
             district_id: formData.district_id,
             city: formData.city,
@@ -228,7 +233,7 @@ export default function AddStudent() {
             subscription_end_date: "",
             status: 1,
             usertype: "student",
-
+            student_category: "",
             state_id: "",
             district_id: "",
             city: "",
@@ -259,7 +264,7 @@ export default function AddStudent() {
                 dob: u.dob ? u.dob.split("T")[0] : "",
                 subscription_end_date: u.subscription_end_date ? u.subscription_end_date.split("T")[0] : "",
                 status: u.status,
-
+                student_category: u.student_category || "",
                 state_id: u.state_id || "",
                 district_id: u.district_id || "",
                 city: u.city || "",
@@ -297,6 +302,19 @@ export default function AddStudent() {
                         error={errors.institute_id}
                         showError={!!errors.institute_id} required
                     />
+
+                    <SelectField
+                        label="Student Category"
+                        value={formData.student_category}
+                        onChange={handleChange("student_category")}
+                        options={categoryOptions.map(sc => ({
+                            value: sc.value,
+                            label: sc.label
+                        }))}
+                        error={errors.student_category}
+                        showError={!!errors.student_category} required
+                    />
+
                     <Input
                         type="date"
                         label="Date of Birth"

@@ -119,6 +119,7 @@ exports.loginUser = async (req, res) => {
         level:user.level,
         usertype: user.usertype,
         createdby: user.createdby,
+        student_category : user.student_category,
       },
       process.env.JWT_ACCESS_SECRET,
       {

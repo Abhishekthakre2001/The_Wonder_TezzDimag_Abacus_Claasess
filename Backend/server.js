@@ -68,7 +68,7 @@ if (cluster.isMaster) {
 
   app.use("/levels", levelRoutes);
   app.use("/sets", setRoutes);
-   app.use("/exam-paper", exampaperRoutes);
+  app.use("/exam-paper", exampaperRoutes);
   app.use("/exam-schedule", examschedule);
   app.use("/exam-schedules", examScheduleRoutes);
   app.use("/results", resultRoutes);

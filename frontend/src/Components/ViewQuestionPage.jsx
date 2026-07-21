@@ -257,12 +257,12 @@ export default function ViewQuestionPage() {
     };
 
     // ---- Add Question ----
-
+   
     const handleAddQuestion = async () => {
         try {
             setButtonLoading(true);
 
-            await questionApi.createQuestion(paper.id, {
+            await questionApi.create(paper.id, {
                 section: newQuestion.section,
                 question_type: newQuestion.question_type,
                 marks: Number(newQuestion.marks),

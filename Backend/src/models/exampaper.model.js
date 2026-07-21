@@ -2,8 +2,35 @@ const pool = require("../config/db");
 
 module.exports = {
 
- getExamPaper: async (createdBy, levelId, setId) => {
-  const sql = `
+  getExamPaper: async (createdBy,
+    level,
+    set_id,
+    student_category,
+    paper_type) => {
+
+    console.log("levelId", createdBy, level, set_id, student_category, paper_type);
+
+    // Step 1: Get level ID
+    const [levelRows] = await pool.query(
+      `
+      SELECT id
+      FROM levels
+      WHERE createdby = ?
+        AND level = ?
+      LIMIT 1
+      `,
+      [createdBy, level]
+    );
+
+    if (levelRows.length === 0) {
+      throw new Error(`Level '${level}' not found.`);
+    }
+
+    const level_id = levelRows[0].id;
+
+    console.log("level_id", level_id)
+
+    const sql = `
     SELECT
       qp.id AS paper_id,
       qp.paper_name,
@@ -36,17 +63,21 @@ module.exports = {
     WHERE qp.created_by = ?
       AND qp.level_id = ?
       AND qp.set_id = ?
+      AND qp.question_paper_type = ?
+      AND qp.paper_type = ?
 
     ORDER BY ppq.sort_order ASC, ppq.question_no ASC;
   `;
 
-  const [rows] = await pool.query(sql, [
-    createdBy,
-    levelId,
-    setId,
-  ]);
+    const [rows] = await pool.query(sql, [
+      createdBy,
+      level_id,
+      set_id,
+      student_category,
+      paper_type
+    ]);
 
-  return rows;
-},
+    return rows;
+  },
 
 };

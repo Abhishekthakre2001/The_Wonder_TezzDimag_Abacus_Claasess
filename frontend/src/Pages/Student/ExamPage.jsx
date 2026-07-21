@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Clock, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -195,45 +195,72 @@ export default function ExamPage() {
     localStorage.getItem("exam_result_row_id") || null
   );
 
+  // Guards the "initialize questions" effect so it only runs ONCE per
+  // freshly-loaded paper, instead of re-running (and resetting your
+  // click) every time the component re-renders.
+  const hasInitializedRef = useRef(false);
+
   /* ============================================================
      FETCH EXAM PAPER
      GET /exam-paper?level_id=<paperLevelId>&set_id=<paperSetId>
      ============================================================ */
+
+  const paper_type = "PRACTICE";
   const { data: paperResponse, loading: questionLoading } = useFetchData(
-    () => questionApi.getExamPaper(paperLevelId, paperSetId),
-    [paperLevelId, paperSetId]
+    () => questionApi.getExamPaper(paperLevelId, paperSetId, paper_type),
+    [paperLevelId, paperSetId, paper_type]
   );
 
-  // Defensive unwrap: accept either a raw array or an axios-style { data: [...] } body
-  const rawQuestions = Array.isArray(paperResponse)
-    ? paperResponse
-    : paperResponse?.data || [];
+  /* ============================================================
+     ⭐ THE FIX ⭐
+     ------------------------------------------------------------
+     Previously this array was rebuilt with .filter()/.sort() on
+     every render, producing a NEW array reference each time even
+     though the contents were identical. Because the "initialize
+     questions" useEffect below depends on this array, React saw
+     a "changed" dependency on every render (including the render
+     triggered by clicking Next/Previous/a question number) and
+     re-ran that effect — which re-read localStorage and reset
+     currentQuestion/answers/visited right back to the old values,
+     making navigation look broken.
 
-  // The API currently returns rows from every paper, not just the requested
-  // set. Try to match paper_id === paperSetId first; if that finds nothing
-  // (paperSetId comes from a different ID space than paper_id right now),
-  // fall back to the first complete paper in the response so the exam still
-  // loads instead of showing "no questions found".
-  const matchedByRequestedSet = paperSetId
-    ? rawQuestions.filter((q) => String(q.paper_id) === String(paperSetId))
-    : [];
+     Wrapping this in useMemo keeps the array reference STABLE
+     across renders unless paperResponse or paperSetId actually
+     changes, so the init effect only fires once per real data
+     load — not on every click.
+     ============================================================ */
+  const paperQuestions = useMemo(() => {
+    // Defensive unwrap: accept either a raw array or an axios-style { data: [...] } body
+    const rawQuestions = Array.isArray(paperResponse)
+      ? paperResponse
+      : paperResponse?.data || [];
 
-  if (paperSetId && !matchedByRequestedSet.length && rawQuestions.length) {
-    console.warn(
-      `No paper found with paper_id === "${paperSetId}". ` +
-      `Falling back to paper_id "${rawQuestions[0]?.paper_id}". ` +
-      `The /exam-paper API is not filtering by the requested set_id.`
+    // The API currently returns rows from every paper, not just the requested
+    // set. Try to match paper_id === paperSetId first; if that finds nothing
+    // (paperSetId comes from a different ID space than paper_id right now),
+    // fall back to the first complete paper in the response so the exam still
+    // loads instead of showing "no questions found".
+    const matchedByRequestedSet = paperSetId
+      ? rawQuestions.filter((q) => String(q.paper_id) === String(paperSetId))
+      : [];
+
+    if (paperSetId && !matchedByRequestedSet.length && rawQuestions.length) {
+      console.warn(
+        `No paper found with paper_id === "${paperSetId}". ` +
+        `Falling back to paper_id "${rawQuestions[0]?.paper_id}". ` +
+        `The /exam-paper API is not filtering by the requested set_id.`
+      );
+    }
+
+    const fallbackPaperId = rawQuestions[0]?.paper_id;
+    const selectedQuestions = matchedByRequestedSet.length
+      ? matchedByRequestedSet
+      : rawQuestions.filter((q) => String(q.paper_id) === String(fallbackPaperId));
+
+    return [...selectedQuestions].sort(
+      (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
     );
-  }
-
-  const fallbackPaperId = rawQuestions[0]?.paper_id;
-  const selectedQuestions = matchedByRequestedSet.length
-    ? matchedByRequestedSet
-    : rawQuestions.filter((q) => String(q.paper_id) === String(fallbackPaperId));
-
-  const paperQuestions = [...selectedQuestions].sort(
-    (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
-  );
+  }, [paperResponse, paperSetId]);
 
   /* ============================================================
      START EXAM (live exams only — records the attempt server-side)
@@ -309,9 +336,16 @@ export default function ExamPage() {
      INITIALIZE QUESTIONS
      Restores an in-progress attempt from localStorage if present,
      otherwise starts fresh using the set's total time.
+
+     ⭐ Runs only ONCE per real data load (hasInitializedRef guard),
+     now that paperQuestions has a stable reference (see useMemo
+     above). This is what stops Next/Previous/question-click from
+     being silently reverted.
      ============================================================ */
   useEffect(() => {
     if (!paperQuestions.length) return;
+    if (hasInitializedRef.current) return; // already initialized — do nothing
+    hasInitializedRef.current = true;
 
     setQuestions(paperQuestions);
 
@@ -325,6 +359,7 @@ export default function ExamPage() {
         setAnswers(parsed?.answers || {});
         setTimeRemaining(Number(parsed?.timeRemaining || 0));
         setVisited(new Set(parsed?.visited || [0]));
+        setTotalExamTime(freshSeconds);
         return;
       } catch (error) {
         console.error("examState parse error:", error);
@@ -338,12 +373,6 @@ export default function ExamPage() {
     setTimeRemaining(freshSeconds);
     setTotalExamTime(freshSeconds);
   }, [paperQuestions]);
-
-  // Make sure totalExamTime is populated even when resuming from a saved state
-  useEffect(() => {
-    if (!paperQuestions.length || totalExamTime) return;
-    setTotalExamTime(Math.max(0, Number(paperQuestions[0]?.duration || 0) * 60));
-  }, [paperQuestions, totalExamTime]);
 
   /* ============================================================
      START THE EXAM ONCE QUESTIONS ARE READY
@@ -469,17 +498,21 @@ export default function ExamPage() {
   };
 
   const handleNext = () => {
-    if (currentQuestion >= questions.length - 1) return;
-    const nextIndex = currentQuestion + 1;
-    setVisited((prev) => new Set([...prev, nextIndex]));
-    setCurrentQuestion(nextIndex);
+    setCurrentQuestion((prevIndex) => {
+      if (prevIndex >= questions.length - 1) return prevIndex;
+      const nextIndex = prevIndex + 1;
+      setVisited((prevVisited) => new Set([...prevVisited, nextIndex]));
+      return nextIndex;
+    });
   };
 
   const handlePrevious = () => {
-    if (currentQuestion <= 0) return;
-    const prevIndex = currentQuestion - 1;
-    setVisited((prev) => new Set([...prev, prevIndex]));
-    setCurrentQuestion(prevIndex);
+    setCurrentQuestion((prevIndex) => {
+      if (prevIndex <= 0) return prevIndex;
+      const newIndex = prevIndex - 1;
+      setVisited((prevVisited) => new Set([...prevVisited, newIndex]));
+      return newIndex;
+    });
   };
 
   const handleQuestionClick = (index) => {
@@ -712,9 +745,8 @@ export default function ExamPage() {
             {[currentQ?.option1, currentQ?.option2, currentQ?.option3, currentQ?.option4].map((opt, i) => (
               <label
                 key={i}
-                className={`border p-3 rounded cursor-pointer ${
-                  answers[currentQuestion] === i ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                }`}
+                className={`border p-3 rounded cursor-pointer ${answers[currentQuestion] === i ? "border-blue-600 bg-blue-50" : "border-gray-300"
+                  }`}
               >
                 <input
                   type="radio"
@@ -754,9 +786,8 @@ export default function ExamPage() {
 
       {/* Question progress drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-slate-50 to-slate-100 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
-          drawerOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-slate-50 to-slate-100 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${drawerOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="h-full flex flex-col p-5">
           <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
@@ -797,15 +828,14 @@ export default function ExamPage() {
                 <button
                   key={index}
                   onClick={() => handleQuestionClick(index)}
-                  className={`h-10 rounded-lg font-semibold text-xs transition-all duration-200 transform hover:scale-105 ${
-                    currentQuestion === index
+                  className={`h-10 rounded-lg font-semibold text-xs transition-all duration-200 transform hover:scale-105 ${currentQuestion === index
                       ? "bg-blue-600 text-white shadow-lg scale-110 ring-2 ring-blue-400"
                       : answers[index] !== undefined
-                      ? "bg-green-500 text-white shadow-md hover:shadow-lg"
-                      : visited.has(index)
-                      ? "bg-yellow-500 text-white shadow-md hover:shadow-lg"
-                      : "bg-gray-200 text-gray-600 hover:bg-gray-300 shadow-sm"
-                  }`}
+                        ? "bg-green-500 text-white shadow-md hover:shadow-lg"
+                        : visited.has(index)
+                          ? "bg-yellow-500 text-white shadow-md hover:shadow-lg"
+                          : "bg-gray-200 text-gray-600 hover:bg-gray-300 shadow-sm"
+                    }`}
                   title={`Question ${index + 1}`}
                 >
                   {index + 1}

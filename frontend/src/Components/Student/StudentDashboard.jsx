@@ -99,29 +99,29 @@ export default function StudentDashboard() {
               items={
                 exams.length > 0
                   ? exams.map((exam) => (
-                      <CreamCarouselCard
-                        key={exam.id}
-                        title={`Abacus Level ${exam.exam_level} Examination`}
-                        subtitle={exam.exam_title}
-                        examDate={exam.start_datetime}
-                        startTime={exam.start_datetime}
-                        endTime={exam.end_datetime}
-                        image={examImg}
-                        isExamLive={exam.remark === 'LIVE'}
-                      />
-                    ))
+                    <CreamCarouselCard
+                      key={exam.id}
+                      title={`Abacus Level ${exam.exam_level} Examination`}
+                      subtitle={exam.exam_title}
+                      examDate={exam.start_datetime}
+                      startTime={exam.start_datetime}
+                      endTime={exam.end_datetime}
+                      image={examImg}
+                      isExamLive={exam.remark === 'LIVE'}
+                    />
+                  ))
                   : [
-                      <CreamCarouselCard
-                        key="no-exam"
-                        title="No Upcoming Exams"
-                        subtitle="Please check back later"
-                        examDate="—"
-                        startTime="—"
-                        endTime="—"
-                        image={examImg}
-                        isExamLive={false}
-                      />,
-                    ]
+                    <CreamCarouselCard
+                      key="no-exam"
+                      title="No Upcoming Exams"
+                      subtitle="Please check back later"
+                      examDate="—"
+                      startTime="—"
+                      endTime="—"
+                      image={examImg}
+                      isExamLive={false}
+                    />,
+                  ]
               }
             />
           </div>

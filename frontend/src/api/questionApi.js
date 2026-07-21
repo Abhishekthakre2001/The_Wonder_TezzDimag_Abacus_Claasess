@@ -50,11 +50,12 @@ const remove = (id) => {
 
 // Get full exam paper (questions) for a level + set — used on the student exam screen
 // GET /exam-paper?level_id=37&set_id=16
-const getExamPaper = (levelId, setId) => {
+const getExamPaper = (levelId, setId, paper_type) => {
   return axiosInstance.get("/exam-paper", {
     params: {
       level_id: levelId,
       set_id: setId,
+      paper_type: paper_type
     },
   });
 };
