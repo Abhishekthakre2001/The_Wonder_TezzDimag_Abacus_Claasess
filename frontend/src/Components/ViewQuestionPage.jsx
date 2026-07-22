@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 // import ReactQuill from "react-quill";
 // import "react-quill/dist/quill.snow.css";
@@ -258,51 +258,98 @@ export default function ViewQuestionPage() {
 
     // ---- Add Question ----
    
-    const handleAddQuestion = async () => {
-        try {
-            setButtonLoading(true);
+//     const handleAddQuestion = async () => {
+//         try {
+//             setButtonLoading(true);
+// console.log("Questions",newQuestion)
+//             await questionApi.create({
+//                 question_paper_id:paper.id,
+//                 section: newQuestion.section,
+//                 question_type: newQuestion.question_type,
+//                 marks: Number(newQuestion.marks),
+//                 negative_marks: Number(newQuestion.negative_marks),
+//                 question: newQuestion.question,
+//                 option1: newQuestion.option1,
+//                 option2: newQuestion.option2,
+//                 option3: newQuestion.option3,
+//                 option4: newQuestion.option4,
+//                 correct_option: newQuestion.correct_option,
+//                 explanation: newQuestion.explanation,
+//             });
 
-            await questionApi.create(paper.id, {
-                section: newQuestion.section,
-                question_type: newQuestion.question_type,
-                marks: Number(newQuestion.marks),
-                negative_marks: Number(newQuestion.negative_marks),
-                question: newQuestion.question,
-                option1: newQuestion.option1,
-                option2: newQuestion.option2,
-                option3: newQuestion.option3,
-                option4: newQuestion.option4,
-                correct_option: newQuestion.correct_option,
-                explanation: newQuestion.explanation,
-            });
+//             await reload();
 
-            await reload();
+//             setShowAddModal(false);
+//             setNewQuestion(EMPTY_QUESTION);
 
-            setShowAddModal(false);
-            setNewQuestion(EMPTY_QUESTION);
+//             setModal({
+//                 open: true,
+//                 type: "success",
+//                 title: "Success",
+//                 message: "Question added successfully.",
+//             });
+//         } catch (err) {
+//             console.error(err);
 
-            setModal({
-                open: true,
-                type: "success",
-                title: "Success",
-                message: "Question added successfully.",
-            });
-        } catch (err) {
-            console.error(err);
-
-            setModal({
-                open: true,
-                type: "error",
-                title: "Error",
-                message: "Failed to add question.",
-            });
-        } finally {
-            setButtonLoading(false);
-        }
-    };
+//             setModal({
+//                 open: true,
+//                 type: "error",
+//                 title: "Error",
+//                 message: "Failed to add question.",
+//             });
+//         } finally {
+//             setButtonLoading(false);
+//         }
+//     };
 
     // ---- Paper Preview ----
 
+
+const handleAddQuestion = async () => {
+    try {
+        setButtonLoading(true);
+
+        await questionApi.addQuestion(paper.id, {
+            section: newQuestion.section,
+            question_type: newQuestion.question_type,
+            marks: Number(newQuestion.marks),
+            negative_marks: Number(newQuestion.negative_marks),
+            question: newQuestion.question,
+            option1: newQuestion.option1,
+            option2: newQuestion.option2,
+            option3: newQuestion.option3,
+            option4: newQuestion.option4,
+            correct_option: newQuestion.correct_option,
+            explanation: newQuestion.explanation,
+        });
+
+        await reload();
+
+        setShowAddModal(false);
+        setNewQuestion(EMPTY_QUESTION);
+
+        setModal({
+            open: true,
+            type: "success",
+            title: "Success",
+            message: "Question added successfully.",
+        });
+    } catch (err) {
+        console.error(err);
+
+        setModal({
+            open: true,
+            type: "error",
+            title: "Error",
+            message:
+                err?.response?.data?.message || "Failed to add question.",
+        });
+    } finally {
+        setButtonLoading(false);
+    }
+};
+
+    
     const handleOpenPreview = async () => {
         setShowPreviewModal(true);
         setPreviewIndex(0);
@@ -705,7 +752,7 @@ export default function ViewQuestionPage() {
 
                         <div className="sticky top-0 bg-white border-b flex justify-between items-center px-6 py-4 z-10">
                             <h2 className="text-xl font-semibold">
-                                Add Question
+                                Add Questions
                             </h2>
 
                             <button

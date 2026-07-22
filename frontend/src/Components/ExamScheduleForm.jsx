@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect} from "react";
 import { useFetchData } from "../hooks/useFetchData";
 import examScheduleApi from "../api/examScheduleApi";
 import InputField from "../UI/InputField";
 import SelectField from "../UI/SelectField";
 import Button from "../UI/Button";
 
-const ExamScheduleForm = ({
-  onClose,
-  onSuccess,
-  editingData = null
-}) => {
+const ExamScheduleForm = ({ onClose, onSuccess, editingData = null }) => {
   // ==========================================
   // Form State
   // ==========================================
@@ -38,19 +34,17 @@ const ExamScheduleForm = ({
   const { data: levelsData } = useFetchData(
     () => examScheduleApi.getLevels(),
     [],
-    { preserveResponse: true }
+    { preserveResponse: true },
   );
 
-  const { data: setsData } = useFetchData(
-    () => examScheduleApi.getSets(),
-    [],
-    { preserveResponse: true }
-  );
+  const { data: setsData } = useFetchData(() => examScheduleApi.getSets(), [], {
+    preserveResponse: true,
+  });
 
   const { data: statesData } = useFetchData(
     () => examScheduleApi.getStates(1, 100),
     [],
-    { preserveResponse: true }
+    { preserveResponse: true },
   );
 
   useEffect(() => {
@@ -66,12 +60,12 @@ const ExamScheduleForm = ({
         ? examScheduleApi.getDistricts(formData.exam_state)
         : Promise.resolve({ data: [] }),
     [formData.exam_state],
-    { preserveResponse: true }
+    { preserveResponse: true },
   );
 
   const { data: instituteData } = useFetchData(
     () => examScheduleApi.getInstitutes(),
-    { preserveResponse: true }
+    { preserveResponse: true },
   );
 
   // const { data: paperData } = useFetchData(
@@ -85,15 +79,15 @@ const ExamScheduleForm = ({
   const { data: paperData } = useFetchData(
     () =>
       formData.exam_level &&
-        formData.exam_set &&
-        formData.exam_category &&
-        formData.exam_type
+      formData.exam_set &&
+      formData.exam_category &&
+      formData.exam_type
         ? examScheduleApi.getQuestionPapers({
-          question_paper_type: formData.exam_category,
-          level_id: formData.exam_level,
-          set_id: formData.exam_set,
-          paper_type: formData.exam_type?.toUpperCase(),
-        })
+            question_paper_type: formData.exam_category,
+            level_id: formData.exam_level,
+            set_id: formData.exam_set,
+            paper_type: formData.exam_type?.toUpperCase(),
+          })
         : Promise.resolve({ data: { records: [] } }),
     [
       formData.exam_category,
@@ -101,7 +95,7 @@ const ExamScheduleForm = ({
       formData.exam_level,
       formData.exam_set,
     ],
-    { preserveResponse: true }
+    { preserveResponse: true },
   );
 
   // ==========================================
@@ -112,7 +106,6 @@ const ExamScheduleForm = ({
     if (!date) return "";
     return new Date(date).toISOString().slice(0, 16);
   };
-
 
   useEffect(() => {
     if (editingData) {
@@ -136,42 +129,40 @@ const ExamScheduleForm = ({
   // ==========================================
   // Options for Dropdowns
   // ==========================================
-  const levelsOptions = (Array.isArray(levelsData) ? levelsData : levelsData?.data || [])
-    .map(item => ({
-      value: item.id,
-      label: item.level_name,
-    }));
+  const levelsOptions = (
+    Array.isArray(levelsData) ? levelsData : levelsData?.data || []
+  ).map((item) => ({
+    value: item.id,
+    label: item.level_name,
+  }));
 
-  const setsOptions = (Array.isArray(setsData) ? setsData : setsData?.data || [])
-    .map(item => ({
-      value: item.id,
-      label: item.set_name,
-    }));
+  const setsOptions = (
+    Array.isArray(setsData) ? setsData : setsData?.data || []
+  ).map((item) => ({
+    value: item.id,
+    label: item.set_name,
+  }));
 
-  const statesOptions = (statesData?.data || [])
-    .map(item => ({
-      value: item.id,
-      label: item.name,
-    }));
-
-  const districtOptions = (
-    Array.isArray(districtData)
-      ? districtData
-      : districtData?.data || []
-  ).map(item => ({
+  const statesOptions = (statesData?.data || []).map((item) => ({
     value: item.id,
     label: item.name,
   }));
 
-  console.log("editingData", editingData)
+  const districtOptions = (
+    Array.isArray(districtData) ? districtData : districtData?.data || []
+  ).map((item) => ({
+    value: item.id,
+    label: item.name,
+  }));
 
-  const instituteOptions = (instituteData || [])
-    .map(item => ({
-      value: item.id,
-      label: item.institute_name,
-    }));
+  console.log("editingData", editingData);
 
-  const paperOptions = (paperData?.records || []).map(item => ({
+  const instituteOptions = (instituteData || []).map((item) => ({
+    value: item.id,
+    label: item.institute_name,
+  }));
+
+  const paperOptions = (paperData?.records || []).map((item) => ({
     value: item.id,
     label: item.paper_name,
   }));
@@ -189,6 +180,7 @@ const ExamScheduleForm = ({
   const typeOptions = [
     { value: "Mock", label: "Mock" },
     { value: "Main Exam", label: "Main Exam" },
+    { value: "Practice", label: "Practice" },
   ];
 
   // ==========================================
@@ -263,47 +255,47 @@ const ExamScheduleForm = ({
   // ==========================================
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched((prev) => ({ ...prev, [name]: true }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleDateChange = (fieldName, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
-    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
     if (errors[fieldName]) {
-      setErrors(prev => ({ ...prev, [fieldName]: "" }));
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
     }
   };
 
   const handleMultiSelectChange = (fieldName, selectedOptions) => {
-    const values = selectedOptions.map(opt =>
-      typeof opt === 'string' ? opt : opt.value
+    const values = selectedOptions.map((opt) =>
+      typeof opt === "string" ? opt : opt.value,
     );
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [fieldName]: values,
     }));
 
     // Reset dependent fields
     if (fieldName === "exam_level" || fieldName === "exam_set") {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         exam_paper_id: "",
       }));
     }
 
     if (fieldName === "exam_state") {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         exam_district: [],
         exam_institute: [],
@@ -311,27 +303,27 @@ const ExamScheduleForm = ({
     }
 
     if (fieldName === "exam_district") {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         exam_institute: [],
       }));
     }
 
-    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
     if (errors[fieldName]) {
-      setErrors(prev => ({ ...prev, [fieldName]: "" }));
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
     }
   };
 
   const handleSelectChange = (fieldName, e) => {
     const value = e.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
-    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
     if (errors[fieldName]) {
-      setErrors(prev => ({ ...prev, [fieldName]: "" }));
+      setErrors((prev) => ({ ...prev, [fieldName]: "" }));
     }
   };
 
@@ -388,7 +380,7 @@ const ExamScheduleForm = ({
         name="exam_title"
         value={formData.exam_title}
         onChange={handleInputChange}
-        onBlur={() => setTouched(prev => ({ ...prev, exam_title: true }))}
+        onBlur={() => setTouched((prev) => ({ ...prev, exam_title: true }))}
         placeholder="Enter exam title"
         error={errors.exam_title}
         showError={touched.exam_title}
@@ -406,11 +398,14 @@ const ExamScheduleForm = ({
             name="start_datetime"
             value={formData.start_datetime}
             onChange={handleInputChange}
-            onBlur={() => setTouched(prev => ({ ...prev, start_datetime: true }))}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.start_datetime && touched.start_datetime
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
-              }`}
+            onBlur={() =>
+              setTouched((prev) => ({ ...prev, start_datetime: true }))
+            }
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.start_datetime && touched.start_datetime
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-blue-500"
+            }`}
           />
           {errors.start_datetime && touched.start_datetime && (
             <p className="text-red-500 text-sm mt-1">{errors.start_datetime}</p>
@@ -426,11 +421,14 @@ const ExamScheduleForm = ({
             name="end_datetime"
             value={formData.end_datetime}
             onChange={handleInputChange}
-            onBlur={() => setTouched(prev => ({ ...prev, end_datetime: true }))}
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${errors.end_datetime && touched.end_datetime
-              ? "border-red-500 focus:ring-red-500"
-              : "border-gray-300 focus:ring-blue-500"
-              }`}
+            onBlur={() =>
+              setTouched((prev) => ({ ...prev, end_datetime: true }))
+            }
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.end_datetime && touched.end_datetime
+                ? "border-red-500 focus:ring-red-500"
+                : "border-gray-300 focus:ring-blue-500"
+            }`}
           />
           {errors.end_datetime && touched.end_datetime && (
             <p className="text-red-500 text-sm mt-1">{errors.end_datetime}</p>
@@ -444,7 +442,7 @@ const ExamScheduleForm = ({
           label="Exam Status"
           value={formData.exam_status}
           onChange={(e) => handleSelectChange("exam_status", e)}
-          onBlur={() => setTouched(prev => ({ ...prev, exam_status: true }))}
+          onBlur={() => setTouched((prev) => ({ ...prev, exam_status: true }))}
           options={statusOptions}
           error={errors.exam_status}
           showError={touched.exam_status}
@@ -456,13 +454,15 @@ const ExamScheduleForm = ({
           value={formData.exam_category}
           // onChange={(e) => handleSelectChange("exam_category", e)}
           onChange={(e) => {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               exam_category: e.target.value,
               exam_paper_id: "",
             }));
           }}
-          onBlur={() => setTouched(prev => ({ ...prev, exam_category: true }))}
+          onBlur={() =>
+            setTouched((prev) => ({ ...prev, exam_category: true }))
+          }
           options={categoryOptions}
           error={errors.exam_category}
           showError={touched.exam_category}
@@ -474,13 +474,13 @@ const ExamScheduleForm = ({
           value={formData.exam_type}
           // onChange={(e) => handleSelectChange("exam_type", e)}
           onChange={(e) => {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               exam_type: e.target.value,
               exam_paper_id: "",
             }));
           }}
-          onBlur={() => setTouched(prev => ({ ...prev, exam_type: true }))}
+          onBlur={() => setTouched((prev) => ({ ...prev, exam_type: true }))}
           options={typeOptions}
           error={errors.exam_type}
           showError={touched.exam_type}
@@ -504,7 +504,7 @@ const ExamScheduleForm = ({
             //   }));
             // }}
             onChange={(e) => {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 exam_level: e.target.value,
                 exam_paper_id: "",
@@ -531,7 +531,7 @@ const ExamScheduleForm = ({
             //   }));
             // }}
             onChange={(e) => {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 exam_set: e.target.value,
                 exam_paper_id: "",
@@ -553,9 +553,9 @@ const ExamScheduleForm = ({
         options={paperOptions}
         placeholder={
           !formData.exam_category ||
-            !formData.exam_type ||
-            !formData.exam_level ||
-            !formData.exam_set
+          !formData.exam_type ||
+          !formData.exam_level ||
+          !formData.exam_set
             ? "Select Category, Type, Level & Set first"
             : "Select Question Paper"
         }
@@ -576,7 +576,7 @@ const ExamScheduleForm = ({
           <SelectField
             value={formData.exam_state}
             onChange={(e) => {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 exam_state: e.target.value,
                 exam_district: "",
@@ -597,7 +597,7 @@ const ExamScheduleForm = ({
           <SelectField
             value={formData.exam_district}
             onChange={(e) => {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 exam_district: e.target.value,
                 exam_institute: "",
@@ -617,7 +617,7 @@ const ExamScheduleForm = ({
           <SelectField
             value={formData.exam_institute}
             onChange={(e) => {
-              setFormData(prev => ({
+              setFormData((prev) => ({
                 ...prev,
                 exam_institute: e.target.value,
               }));

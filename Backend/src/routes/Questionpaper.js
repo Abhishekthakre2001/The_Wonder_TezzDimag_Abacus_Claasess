@@ -10,6 +10,8 @@ router.use(allowedRoles("admin"));
 
 // Import Question Paper with Questions
 router.post("/import", controller.importQuestions);
+// add question to existung papaer
+router.post("/:paperId/question", controller.addnewQ);
 
 // Get all question papers (only logged-in user data)
 router.get("/", controller.getQuestionPapers);

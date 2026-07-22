@@ -1,5 +1,3 @@
-
-
 import axiosInstance from "./axiosInstance";
 
 // Create Question Paper
@@ -55,14 +53,17 @@ const getExamPaper = (levelId, setId, paper_type) => {
     params: {
       level_id: levelId,
       set_id: setId,
-      paper_type: paper_type
+      paper_type: paper_type,
     },
   });
 };
 
-
+const addQuestion = (paperId, payload) => {
+  return axiosInstance.post(`/questions/${paperId}/question`, payload);
+};
 
 export default {
+  addQuestion,
   create,
   getAll,
   getQuestionsByPaper,

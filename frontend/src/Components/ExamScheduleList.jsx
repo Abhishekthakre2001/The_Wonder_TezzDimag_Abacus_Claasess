@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Download } from "lucide-react";
 import { useFetchData } from "../hooks/useFetchData";
 import useTableState from "../hooks/useTableState";

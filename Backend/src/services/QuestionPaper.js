@@ -1,47 +1,39 @@
 const QuestionPaperModel = require("../models/QuestionPaper");
 
 module.exports = {
-
-    getFilteredQuestionPapers: (filters) =>
+  getFilteredQuestionPapers: (filters) =>
     QuestionPaperModel.getFilteredQuestionPapers(filters),
 
-    
-    importQuestions: (data) =>
-        QuestionPaperModel.importQuestions(data),
+  addnewQuestions: (data) => QuestionPaperModel.addQuestions(data),
+  importQuestions: (data) => QuestionPaperModel.importQuestions(data),
 
-    getQuestionPapers: (userId, page, limit, search) =>
-        QuestionPaperModel.getQuestionPapers(userId, page, limit, search),
+  getQuestionPapers: (userId, page, limit, search) =>
+    QuestionPaperModel.getQuestionPapers(userId, page, limit, search),
 
-    getQuestionsByPaper: (paperId, userId, page, limit, search) =>
-        QuestionPaperModel.getQuestionsByPaper(
-            paperId,
-            userId,
-            page,
-            limit,
-            search
-        ),
+  getQuestionsByPaper: (paperId, userId, page, limit, search) =>
+    QuestionPaperModel.getQuestionsByPaper(
+      paperId,
+      userId,
+      page,
+      limit,
+      search,
+    ),
 
-    updateQuestionPaper: (id, data, userId) =>
-        QuestionPaperModel.updateQuestionPaper(id, data, userId),
+  updateQuestionPaper: (id, data, userId) =>
+    QuestionPaperModel.updateQuestionPaper(id, data, userId),
 
-    deleteQuestionPaper: (id, userId) =>
-        QuestionPaperModel.deleteQuestionPaper(id, userId),
+  deleteQuestionPaper: (id, userId) =>
+    QuestionPaperModel.deleteQuestionPaper(id, userId),
 
-    deleteQuestion: (id, userId) =>
-        QuestionPaperModel.deleteQuestion(id, userId),
+  deleteQuestion: (id, userId) => QuestionPaperModel.deleteQuestion(id, userId),
 
-    updateQuestion: (id, data, userId) =>
-        QuestionPaperModel.updateQuestion(id, data, userId),
+  updateQuestion: (id, data, userId) =>
+    QuestionPaperModel.updateQuestion(id, data, userId),
 
-    // export
-    exportQuestionPapers: (userId, search, res) =>
+  // export
+  exportQuestionPapers: (userId, search, res) =>
     QuestionPaperModel.exportQuestionPapers(userId, search, res),
 
-exportQuestionPaper: (paperId, userId, search, res) =>
-    QuestionPaperModel.exportQuestionPaper(
-        paperId,
-        userId,
-        search,
-        res
-    ),
+  exportQuestionPaper: (paperId, userId, search, res) =>
+    QuestionPaperModel.exportQuestionPaper(paperId, userId, search, res),
 };
