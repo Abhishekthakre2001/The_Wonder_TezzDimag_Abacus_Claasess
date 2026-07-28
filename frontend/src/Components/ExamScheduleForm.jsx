@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useFetchData } from "../hooks/useFetchData";
 import examScheduleApi from "../api/examScheduleApi";
 import InputField from "../UI/InputField";
@@ -107,25 +107,42 @@ const ExamScheduleForm = ({ onClose, onSuccess, editingData = null }) => {
     return new Date(date).toISOString().slice(0, 16);
   };
 
-  useEffect(() => {
-    if (editingData) {
-      setFormData({
-        exam_title: editingData.exam_title || "",
-        start_datetime: formatDateTimeLocal(editingData.start_datetime),
-        end_datetime: formatDateTimeLocal(editingData.end_datetime),
-        exam_status: editingData.exam_status || "Active",
-        exam_category: editingData.exam_category || "",
-        exam_type: editingData.exam_type || "",
-        exam_level: editingData.exam_level || [],
-        exam_set: editingData.exam_set || [],
-        exam_state: editingData.exam_state || [],
-        exam_district: editingData.exam_district || [],
-        exam_institute: editingData.exam_institute || [],
-        exam_paper_id: editingData.exam_paper_id || "",
-      });
-    }
-  }, [editingData]);
-
+  // useEffect(() => {
+  //   if (editingData) {
+  //     setFormData({
+  //       exam_title: editingData.exam_title || "",
+  //       start_datetime: formatDateTimeLocal(editingData.start_datetime),
+  //       end_datetime: formatDateTimeLocal(editingData.end_datetime),
+  //       exam_status: editingData.exam_status || "Active",
+  //       exam_category: editingData.exam_category || "",
+  //       exam_type: editingData.exam_type || "",
+  //       exam_level: editingData.exam_level || [],
+  //       exam_set: editingData.exam_set || [],
+  //       exam_state: editingData.exam_state || [],
+  //       exam_district: editingData.exam_district || [],
+  //       exam_institute: editingData.exam_institute || [],
+  //       exam_paper_id: editingData.exam_paper_id || "",
+  //     });
+  //   }
+  // }, [editingData]);
+useEffect(() => {
+  if (editingData) {
+    setFormData({
+      exam_title: editingData.exam_title || "",
+      start_datetime: formatDateTimeLocal(editingData.start_datetime),
+      end_datetime: formatDateTimeLocal(editingData.end_datetime),
+      exam_status: editingData.exam_status || "Active",
+      exam_category: editingData.exam_category || "",
+      exam_type: editingData.exam_type || "",
+      exam_level: editingData.exam_level || "",
+      exam_set: editingData.exam_set || "",
+      exam_state: editingData.exam_state || "",
+      exam_district: editingData.exam_district || "",
+      exam_institute: editingData.exam_institute || "",
+      exam_paper_id: editingData.exam_paper_id || "",
+    });
+  }
+}, [editingData]);
   // ==========================================
   // Options for Dropdowns
   // ==========================================
@@ -351,6 +368,12 @@ const ExamScheduleForm = ({ onClose, onSuccess, editingData = null }) => {
       };
 
       if (editingData?.id) {
+        console.log("Payload:", payload);
+        console.log(
+          "exam_level:",
+          payload.exam_level,
+          typeof payload.exam_level,
+        );
         await examScheduleApi.update(editingData.id, payload);
       } else {
         await examScheduleApi.create(payload);

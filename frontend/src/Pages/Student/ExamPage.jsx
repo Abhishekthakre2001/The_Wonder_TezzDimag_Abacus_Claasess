@@ -12,6 +12,7 @@ import { useCreate } from "../../hooks/useCreate";
 import questionApi from "../../api/questionApi";
 import ExamResultApi from "../../api/examResultApi";
 import ResultApi from "../../api/result";
+import practiceResultApi from "../../api/practiceResult";
 
 /* ============================================================
    TIME HELPERS
@@ -33,8 +34,14 @@ const addOneSecond = (time) => {
 
   let [hh, mm, ss] = time.split(":").map(Number);
   ss += 1;
-  if (ss >= 60) { ss = 0; mm += 1; }
-  if (mm >= 60) { mm = 0; hh += 1; }
+  if (ss >= 60) {
+    ss = 0;
+    mm += 1;
+  }
+  if (mm >= 60) {
+    mm = 0;
+    hh += 1;
+  }
 
   return [hh, mm, ss].map((n) => String(n).padStart(2, "0")).join(":");
 };
@@ -112,7 +119,10 @@ const renderMathQuestion = (rawQuestion) => {
         }
 
         return (
-          <div key={i} className="grid grid-cols-[40px_auto] justify-end items-center mb-1">
+          <div
+            key={i}
+            className="grid grid-cols-[40px_auto] justify-end items-center mb-1"
+          >
             <span className="text-center">{operator}</span>
             <span>{number}</span>
           </div>
@@ -150,9 +160,11 @@ const summarizeResults = (questionResults, totalExamTime, timeRemaining) => {
   return {
     total_question: questionResults.length,
     total_solved: questionResults.filter((r) => r.status !== "unsolved").length,
-    total_unsolved: questionResults.filter((r) => r.status === "unsolved").length,
+    total_unsolved: questionResults.filter((r) => r.status === "unsolved")
+      .length,
     total_correct: questionResults.filter((r) => r.status === "correct").length,
-    total_incorrect: questionResults.filter((r) => r.status === "incorrect").length,
+    total_incorrect: questionResults.filter((r) => r.status === "incorrect")
+      .length,
     total_time: formatTime(totalExamTime),
     time_taken: addOneSecond(formatTime(usedTime)),
   };
@@ -166,15 +178,20 @@ export default function ExamPage() {
 
   /* ---------- Exam context (set on the dashboard before navigating here) ---------- */
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const examType = localStorage.getItem("examType");        // "mock" | "live"
-  const paperSetId = localStorage.getItem("paperset");      // set_id
-  const paperLevelId = localStorage.getItem("paperlevel");  // level_id
+  const examType = localStorage.getItem("examType"); // "mock" | "live"
+  const paperSetId = localStorage.getItem("paperset"); // set_id
+  const paperLevelId = localStorage.getItem("paperlevel"); // level_id
   const userLevel = localStorage.getItem("Userlevl") || paperLevelId || "";
   const examTitle = localStorage.getItem("Exam_Tittle") || "Not Available";
   const examId = localStorage.getItem("exam_id");
 
   /* ---------- UI state ---------- */
-  const [modal, setModal] = useState({ open: false, type: "", title: "", message: "" });
+  const [modal, setModal] = useState({
+    open: false,
+    type: "",
+    title: "",
+    message: "",
+  });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [examReady, setExamReady] = useState(false); // controls whether exam UI is shown
@@ -183,7 +200,7 @@ export default function ExamPage() {
   /* ---------- Exam progress state ---------- */
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState({});            // { [questionIndex]: selectedOptionIndex }
+  const [answers, setAnswers] = useState({}); // { [questionIndex]: selectedOptionIndex }
   const [visited, setVisited] = useState(new Set([0]));
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [totalExamTime, setTotalExamTime] = useState(0);
@@ -192,7 +209,7 @@ export default function ExamPage() {
   const [startCalled, setStartCalled] = useState(false);
   const [isFinishingMock, setIsFinishingMock] = useState(false);
   const [examRowId, setExamRowId] = useState(
-    localStorage.getItem("exam_result_row_id") || null
+    localStorage.getItem("exam_result_row_id") || null,
   );
 
   // Guards the "initialize questions" effect so it only runs ONCE per
@@ -208,7 +225,7 @@ export default function ExamPage() {
   const paper_type = "PRACTICE";
   const { data: paperResponse, loading: questionLoading } = useFetchData(
     () => questionApi.getExamPaper(paperLevelId, paperSetId, paper_type),
-    [paperLevelId, paperSetId, paper_type]
+    [paperLevelId, paperSetId, paper_type],
   );
 
   /* ============================================================
@@ -247,18 +264,20 @@ export default function ExamPage() {
     if (paperSetId && !matchedByRequestedSet.length && rawQuestions.length) {
       console.warn(
         `No paper found with paper_id === "${paperSetId}". ` +
-        `Falling back to paper_id "${rawQuestions[0]?.paper_id}". ` +
-        `The /exam-paper API is not filtering by the requested set_id.`
+          `Falling back to paper_id "${rawQuestions[0]?.paper_id}". ` +
+          `The /exam-paper API is not filtering by the requested set_id.`,
       );
     }
 
     const fallbackPaperId = rawQuestions[0]?.paper_id;
     const selectedQuestions = matchedByRequestedSet.length
       ? matchedByRequestedSet
-      : rawQuestions.filter((q) => String(q.paper_id) === String(fallbackPaperId));
+      : rawQuestions.filter(
+          (q) => String(q.paper_id) === String(fallbackPaperId),
+        );
 
     return [...selectedQuestions].sort(
-      (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
+      (a, b) => (a.sort_order || 0) - (b.sort_order || 0),
     );
   }, [paperResponse, paperSetId]);
 
@@ -270,7 +289,12 @@ export default function ExamPage() {
     (response) => {
       const rowId = response?.id;
       if (!rowId) {
-        setModal({ open: true, type: "error", title: "Error", message: "Start exam response invalid" });
+        setModal({
+          open: true,
+          type: "error",
+          title: "Error",
+          message: "Start exam response invalid",
+        });
         return;
       }
       localStorage.setItem("exam_result_row_id", rowId);
@@ -284,7 +308,7 @@ export default function ExamPage() {
         title: "Start Failed",
         message: error?.message || "Unable to start exam",
       });
-    }
+    },
   );
 
   /* ============================================================
@@ -301,7 +325,7 @@ export default function ExamPage() {
         title: "Submit Failed",
         message: error?.message || "Something went wrong while submitting exam",
       });
-    }
+    },
   );
 
   /* ---------- Shared "exam finished" cleanup + redirect ---------- */
@@ -350,7 +374,10 @@ export default function ExamPage() {
     setQuestions(paperQuestions);
 
     const savedExamState = localStorage.getItem("examState");
-    const freshSeconds = Math.max(0, Number(paperQuestions[0]?.duration || 0) * 60);
+    const freshSeconds = Math.max(
+      0,
+      Number(paperQuestions[0]?.duration || 0) * 60,
+    );
 
     if (savedExamState) {
       try {
@@ -408,7 +435,16 @@ export default function ExamPage() {
       Exam_level: userLevel,
       paper_set: paperSetId,
     });
-  }, [questions.length, totalExamTime, hasValidExamContext, examType, examRowId, examReady, submitting, isFinishingMock]);
+  }, [
+    questions.length,
+    totalExamTime,
+    hasValidExamContext,
+    examType,
+    examRowId,
+    examReady,
+    submitting,
+    isFinishingMock,
+  ]);
 
   /* ---------- Persist progress so a refresh doesn't lose answers ---------- */
   useEffect(() => {
@@ -421,9 +457,16 @@ export default function ExamPage() {
         answers,
         timeRemaining,
         visited: Array.from(visited),
-      })
+      }),
     );
-  }, [currentQuestion, answers, timeRemaining, visited, questions.length, examReady]);
+  }, [
+    currentQuestion,
+    answers,
+    timeRemaining,
+    visited,
+    questions.length,
+    examReady,
+  ]);
 
   /* ---------- Countdown timer, auto-submits at zero ---------- */
   useEffect(() => {
@@ -433,7 +476,12 @@ export default function ExamPage() {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setModal({ open: true, type: "warning", title: "Time's Up", message: "Your exam time is over." });
+          setModal({
+            open: true,
+            type: "warning",
+            title: "Time's Up",
+            message: "Your exam time is over.",
+          });
           setTimeout(() => handleSubmitExam(), 300);
           return 0;
         }
@@ -475,7 +523,9 @@ export default function ExamPage() {
     const handleBackButton = () => {
       if (!examReady || submitting) return;
 
-      const confirmLeave = window.confirm("Leaving the exam will submit your answers. Do you want to continue?");
+      const confirmLeave = window.confirm(
+        "Leaving the exam will submit your answers. Do you want to continue?",
+      );
       if (confirmLeave) handleSubmitExam();
       else window.history.pushState(null, "", window.location.href);
     };
@@ -490,13 +540,37 @@ export default function ExamPage() {
   const answeredCount = Object.keys(answers).length;
   const unansweredCount = Math.max(0, questions.length - answeredCount);
   const unvisitedCount = Math.max(0, questions.length - visited.size);
-  const progressPercent = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+  const progressPercent =
+    questions.length > 0
+      ? Math.round((answeredCount / questions.length) * 100)
+      : 0;
 
   /* ---------- Navigation / answer handlers ---------- */
-  const handleAnswerSelect = (optionIndex) => {
-    setAnswers((prev) => ({ ...prev, [currentQuestion]: optionIndex }));
-  };
+  // const handleAnswerSelect = (optionIndex) => {
+  //   setAnswers((prev) => ({ ...prev, [currentQuestion]: optionIndex }));
+  // };
 
+  const handleAnswerSelect = async (optionIndex) => {
+    // Update UI immediately
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion]: optionIndex,
+    }));
+
+    try {
+      const payload = {
+        result_id: Number(localStorage.getItem("practice_result_id")),
+
+        question_id: questions[currentQuestion].id,
+
+        selected_option: optionIndex,
+      };
+
+      await practiceResultApi.saveAnswer(payload);
+    } catch (error) {
+      console.error("Save Answer Error:", error);
+    }
+  };
   const handleNext = () => {
     setCurrentQuestion((prevIndex) => {
       if (prevIndex >= questions.length - 1) return prevIndex;
@@ -522,7 +596,12 @@ export default function ExamPage() {
   };
 
   const openSubmitWarning = () => {
-    setModal({ open: true, type: "warning", title: "Warning", message: "Really want to submit Exam?" });
+    setModal({
+      open: true,
+      type: "warning",
+      title: "Warning",
+      message: "Really want to submit Exam?",
+    });
   };
 
   /* ============================================================
@@ -531,25 +610,161 @@ export default function ExamPage() {
      option), logs a complete breakdown to the console, then
      sends the summary to the right API for mock vs live exams.
      ============================================================ */
+  // const handleSubmitExam = async () => {
+  //   if (submitting || !questions.length) return;
+
+  //   if (examType !== "mock" && !examRowId) {
+  //     setModal({ open: true, type: "error", title: "Error", message: "Exam session not found. Please restart the exam." });
+  //     return;
+  //   }
+
+  //   setSubmitting(true);
+
+  //   // Per-question breakdown: question id, selected option, correct option, status
+  //   const questionResults = buildQuestionResults(questions, answers);
+  //   const summary = summarizeResults(questionResults, totalExamTime, timeRemaining);
+
+  //   console.log("===== EXAM SUBMISSION: PER-QUESTION RESULTS =====");
+  //   console.table(questionResults);
+  //   console.log("===== EXAM SUBMISSION: SUMMARY =====", summary);
+
+  //   // ---------------- MOCK TEST ----------------
+  //   if (examType === "mock") {
+  //     const now = new Date();
+
+  //     const resultPayload = {
+  //       PaperLevel: paperLevelId,
+  //       set: paperSetId,
+  //       Level: userLevel,
+  //       user_id: user.id,
+  //       total_question: summary.total_question,
+  //       total_answer: summary.total_solved,
+  //       total_correct: summary.total_correct,
+  //       total_unsolve: summary.total_unsolved,
+  //       date: now.toLocaleDateString("en-CA"),           // YYYY-MM-DD
+  //       time: now.toLocaleString("sv-SE").replace("T", " "), // YYYY-MM-DD HH:mm:ss
+  //       totaltime: summary.total_time,
+  //       time_taken: summary.time_taken,
+  //       createdby: user.createdby,
+  //       resultfor: "Test",
+  //       examtitle: examTitle,
+  //       exam_id: examId || null,
+  //       question_results: questionResults, // question id + selected option, for detailed review
+  //     };
+
+  //     localStorage.removeItem("examState");
+  //     localStorage.setItem("result", JSON.stringify(resultPayload));
+
+  //     try {
+  //       await ResultApi.create(resultPayload);
+  //       finishExam();
+  //       setTimeout(() => navigate("/student-result", { state: resultPayload }), 0);
+  //     } catch (error) {
+  //       setSubmitting(false);
+
+  //       const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
+  //       const isLiveExamError = errorMessage === "Your exam is live now. Please give the exam, not a mock test.";
+
+  //       if (isLiveExamError) {
+  //         setFatalError(errorMessage);
+  //         return;
+  //       }
+
+  //       setModal({ open: true, type: "error", title: "Error", message: errorMessage });
+  //     }
+  //     return;
+  //   }
+
+  //   // ---------------- LIVE EXAM ----------------
+  //   const livePayload = {
+  //     total_solve: summary.total_solved,
+  //     total_unsolve: summary.total_unsolved,
+  //     total_correct: summary.total_correct,
+  //     time_taken: summary.time_taken,
+  //     question_results: questionResults, // question id + selected option, for detailed review
+  //   };
+
+  //   localStorage.setItem(
+  //     "result",
+  //     JSON.stringify({
+  //       exam_row_id: examRowId,
+  //       total_question: summary.total_question,
+  //       ...livePayload,
+  //     })
+  //   );
+  //   localStorage.removeItem("examState");
+
+  //   try {
+  //     await submitLiveExam({ id: examRowId, payload: livePayload });
+  //   } catch (error) {
+  //     console.error("Live submit error:", error);
+  //   }
+  // };
   const handleSubmitExam = async () => {
     if (submitting || !questions.length) return;
 
-    if (examType !== "mock" && !examRowId) {
-      setModal({ open: true, type: "error", title: "Error", message: "Exam session not found. Please restart the exam." });
+    if (examType !== "mock" && examType !== "Practice" && !examRowId) {
+      setModal({
+        open: true,
+        type: "error",
+        title: "Error",
+        message: "Exam session not found. Please restart the exam.",
+      });
       return;
     }
 
     setSubmitting(true);
 
-    // Per-question breakdown: question id, selected option, correct option, status
     const questionResults = buildQuestionResults(questions, answers);
-    const summary = summarizeResults(questionResults, totalExamTime, timeRemaining);
+    const summary = summarizeResults(
+      questionResults,
+      totalExamTime,
+      timeRemaining,
+    );
 
-    console.log("===== EXAM SUBMISSION: PER-QUESTION RESULTS =====");
+    console.log("===== EXAM SUBMISSION =====");
     console.table(questionResults);
-    console.log("===== EXAM SUBMISSION: SUMMARY =====", summary);
+    console.log(summary);
+    const exam = localStorage.getItem("exam");
+    // ================= PRACTICE EXAM =================
+    if (exam === "Practice") {
+      try {
+        const resultId = Number(localStorage.getItem("practice_result_id"));
 
-    // ---------------- MOCK TEST ----------------
+        await practiceResultApi.submitPracticeExam({
+          result_id: resultId,
+        });
+
+        localStorage.removeItem("examState");
+
+        finishExam();
+
+        navigate("/student-result", {
+          state: {
+            result_id: resultId,
+            examType: "Practice",
+          },
+        });
+
+        return;
+      } catch (error) {
+        console.error(error);
+
+        setSubmitting(false);
+
+        setModal({
+          open: true,
+          type: "error",
+          title: "Error",
+          message:
+            error?.response?.data?.message || "Unable to submit practice exam.",
+        });
+
+        return;
+      }
+    }
+
+    // ================= MOCK TEST =================
     if (examType === "mock") {
       const now = new Date();
 
@@ -562,15 +777,15 @@ export default function ExamPage() {
         total_answer: summary.total_solved,
         total_correct: summary.total_correct,
         total_unsolve: summary.total_unsolved,
-        date: now.toLocaleDateString("en-CA"),           // YYYY-MM-DD
-        time: now.toLocaleString("sv-SE").replace("T", " "), // YYYY-MM-DD HH:mm:ss
+        date: now.toLocaleDateString("en-CA"),
+        time: now.toLocaleString("sv-SE").replace("T", " "),
         totaltime: summary.total_time,
         time_taken: summary.time_taken,
         createdby: user.createdby,
         resultfor: "Test",
         examtitle: examTitle,
         exam_id: examId || null,
-        question_results: questionResults, // question id + selected option, for detailed review
+        question_results: questionResults,
       };
 
       localStorage.removeItem("examState");
@@ -578,31 +793,48 @@ export default function ExamPage() {
 
       try {
         await ResultApi.create(resultPayload);
+
         finishExam();
-        setTimeout(() => navigate("/student-result", { state: resultPayload }), 0);
+
+        setTimeout(() => {
+          navigate("/student-result", {
+            state: resultPayload,
+          });
+        }, 0);
       } catch (error) {
         setSubmitting(false);
 
-        const errorMessage = error?.response?.data?.message || error?.message || "Something went wrong";
-        const isLiveExamError = errorMessage === "Your exam is live now. Please give the exam, not a mock test.";
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong";
 
-        if (isLiveExamError) {
+        if (
+          errorMessage ===
+          "Your exam is live now. Please give the exam, not a mock test."
+        ) {
           setFatalError(errorMessage);
           return;
         }
 
-        setModal({ open: true, type: "error", title: "Error", message: errorMessage });
+        setModal({
+          open: true,
+          type: "error",
+          title: "Error",
+          message: errorMessage,
+        });
       }
+
       return;
     }
 
-    // ---------------- LIVE EXAM ----------------
+    // ================= LIVE EXAM =================
     const livePayload = {
       total_solve: summary.total_solved,
       total_unsolve: summary.total_unsolved,
       total_correct: summary.total_correct,
       time_taken: summary.time_taken,
-      question_results: questionResults, // question id + selected option, for detailed review
+      question_results: questionResults,
     };
 
     localStorage.setItem(
@@ -611,22 +843,39 @@ export default function ExamPage() {
         exam_row_id: examRowId,
         total_question: summary.total_question,
         ...livePayload,
-      })
+      }),
     );
+
     localStorage.removeItem("examState");
 
     try {
-      await submitLiveExam({ id: examRowId, payload: livePayload });
+      await submitLiveExam({
+        id: examRowId,
+        payload: livePayload,
+      });
+
+      finishExam();
     } catch (error) {
       console.error("Live submit error:", error);
+
+      setSubmitting(false);
+
+      setModal({
+        open: true,
+        type: "error",
+        title: "Error",
+        message:
+          error?.response?.data?.message || "Unable to submit live exam.",
+      });
     }
   };
-
   const handleGoToDashboard = () => {
     localStorage.clear();
     sessionStorage.clear();
     document.cookie.split(";").forEach((c) => {
-      document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+      document.cookie =
+        c.trim().split("=")[0] +
+        "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
     });
     window.location.href = "/student-dashboard";
   };
@@ -672,7 +921,11 @@ export default function ExamPage() {
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
           <h2 className="text-xl font-bold text-red-600 mb-4">Error</h2>
           <p className="text-gray-700 mb-6">{fatalError}</p>
-          <Button variant="primary" onClick={handleGoToDashboard} className="w-full">
+          <Button
+            variant="primary"
+            onClick={handleGoToDashboard}
+            className="w-full"
+          >
             Logout
           </Button>
         </div>
@@ -715,7 +968,10 @@ export default function ExamPage() {
               <h2 className="font-bold">
                 Question {currentQuestion + 1} of {questions.length}
               </h2>
-              <p><b>Level : </b>{userLevel}</p>
+              <p>
+                <b>Level : </b>
+                {userLevel}
+              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -737,23 +993,35 @@ export default function ExamPage() {
 
           {/* Question */}
           <div className="mb-4 flex justify-center">
-            <div className="text-center">{renderMathQuestion(currentQ?.question)}</div>
+            <div className="text-center">
+              {renderMathQuestion(currentQ?.question)}
+            </div>
           </div>
 
           {/* Options */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {[currentQ?.option1, currentQ?.option2, currentQ?.option3, currentQ?.option4].map((opt, i) => (
+            {[
+              currentQ?.option1,
+              currentQ?.option2,
+              currentQ?.option3,
+              currentQ?.option4,
+            ].map((opt, i) => (
               <label
                 key={i}
-                className={`border p-3 rounded cursor-pointer ${answers[currentQuestion] === i ? "border-blue-600 bg-blue-50" : "border-gray-300"
-                  }`}
+                className={`border p-3 rounded cursor-pointer ${
+                  answers[currentQuestion] === i
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-300"
+                }`}
               >
                 <input
                   type="radio"
                   checked={answers[currentQuestion] === i}
                   onChange={() => handleAnswerSelect(i)}
                 />
-                <span className="ml-2">{String.fromCharCode(65 + i)}. {stripHtml(opt)}</span>
+                <span className="ml-2">
+                  {String.fromCharCode(65 + i)}. {stripHtml(opt)}
+                </span>
               </label>
             ))}
           </div>
@@ -761,7 +1029,11 @@ export default function ExamPage() {
           {/* Bottom Nav */}
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 px-4 py-3 z-50">
             <div className="max-w-5xl mx-auto flex justify-between items-center">
-              <Button variant="secondary" onClick={handlePrevious} disabled={currentQuestion === 0}>
+              <Button
+                variant="secondary"
+                onClick={handlePrevious}
+                disabled={currentQuestion === 0}
+              >
                 <ChevronLeft /> Previous
               </Button>
 
@@ -781,21 +1053,32 @@ export default function ExamPage() {
 
       {/* Drawer overlay */}
       {drawerOpen && (
-        <div className="fixed inset-0 bg-opacity-50 z-40" onClick={() => setDrawerOpen(false)} />
+        <div
+          className="fixed inset-0 bg-opacity-50 z-40"
+          onClick={() => setDrawerOpen(false)}
+        />
       )}
 
       {/* Question progress drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-slate-50 to-slate-100 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${drawerOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed right-0 top-0 h-full w-80 bg-gradient-to-b from-slate-50 to-slate-100 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
+          drawerOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="h-full flex flex-col p-5">
           <div className="flex justify-between items-center mb-6 pb-4 border-b-2 border-blue-200">
             <div>
-              <h3 className="text-xl font-bold text-gray-800">Question Progress</h3>
-              <p className="text-xs text-gray-500 mt-1">{answeredCount}/{questions.length} Answered</p>
+              <h3 className="text-xl font-bold text-gray-800">
+                Question Progress
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {answeredCount}/{questions.length} Answered
+              </p>
             </div>
-            <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-red-100 rounded-lg transition duration-200">
+            <button
+              onClick={() => setDrawerOpen(false)}
+              className="p-2 hover:bg-red-100 rounded-lg transition duration-200"
+            >
               <X size={24} className="text-red-600" />
             </button>
           </div>
@@ -816,26 +1099,33 @@ export default function ExamPage() {
           <div className="bg-white rounded-lg p-0 shadow-sm border border-gray-200">
             <div className="mt-8 space-y-3 flex gap-2 p-2">
               <StatCard label="Answered" value={answeredCount} color="green" />
-              <StatCard label="Unanswered" value={unansweredCount} color="yellow" />
+              <StatCard
+                label="Unanswered"
+                value={unansweredCount}
+                color="yellow"
+              />
               <StatCard label="Unvisited" value={unvisitedCount} color="gray" />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-2">
-            <h4 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide">Questions</h4>
+            <h4 className="text-xs font-bold text-gray-700 mb-3 uppercase tracking-wide">
+              Questions
+            </h4>
             <div className="grid grid-cols-5 gap-2">
               {questions.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => handleQuestionClick(index)}
-                  className={`h-10 rounded-lg font-semibold text-xs transition-all duration-200 transform hover:scale-105 ${currentQuestion === index
+                  className={`h-10 rounded-lg font-semibold text-xs transition-all duration-200 transform hover:scale-105 ${
+                    currentQuestion === index
                       ? "bg-blue-600 text-white shadow-lg scale-110 ring-2 ring-blue-400"
                       : answers[index] !== undefined
                         ? "bg-green-500 text-white shadow-md hover:shadow-lg"
                         : visited.has(index)
                           ? "bg-yellow-500 text-white shadow-md hover:shadow-lg"
                           : "bg-gray-200 text-gray-600 hover:bg-gray-300 shadow-sm"
-                    }`}
+                  }`}
                   title={`Question ${index + 1}`}
                 >
                   {index + 1}
@@ -865,7 +1155,11 @@ function Info({ icon: Icon, label, value, danger }) {
       <Icon className={danger ? "text-red-600" : "text-blue-600"} size={18} />
       <div>
         <p className="text-xs text-gray-500">{label}</p>
-        <p className={`font-semibold ${danger ? "text-red-600" : "text-gray-800"}`}>{value}</p>
+        <p
+          className={`font-semibold ${danger ? "text-red-600" : "text-gray-800"}`}
+        >
+          {value}
+        </p>
       </div>
     </div>
   );
@@ -881,8 +1175,12 @@ function StatCard({ label, value, color }) {
   return (
     <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
       <div className="flex flex-col justify-between items-center">
-        <span className={`text-xs font-medium ${STAT_COLORS[color]}`}>{label}</span>
-        <span className={`text-lg font-bold ${STAT_COLORS[color]}`}>{value}</span>
+        <span className={`text-xs font-medium ${STAT_COLORS[color]}`}>
+          {label}
+        </span>
+        <span className={`text-lg font-bold ${STAT_COLORS[color]}`}>
+          {value}
+        </span>
       </div>
     </div>
   );

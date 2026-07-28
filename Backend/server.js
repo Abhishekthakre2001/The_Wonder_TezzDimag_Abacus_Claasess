@@ -26,6 +26,7 @@ const cookieParser = require("cookie-parser");
 const RegistartionRoute = require("./src/routes/Individualregistration");
 const questionpaperroute = require("./src/routes/Questionpaper");
 const exampaperRoutes = require("./src/routes/ExamPaperRoutes");
+const practiceResultRoutes = require("./src/routes/practiceResult");
 
 const app = express();
 const PORT = 4001;
@@ -81,7 +82,7 @@ if (cluster.isMaster) {
   app.use("/districts", District);
   app.use("/institute", Institute);
   app.use("/individual-registration", RegistartionRoute);
-
+app.use('/practice-result',practiceResultRoutes)
   // ✅ Error Handling
   app.use(errorHandler);
 

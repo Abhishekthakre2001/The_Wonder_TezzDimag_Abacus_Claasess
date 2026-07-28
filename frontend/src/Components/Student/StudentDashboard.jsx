@@ -1,57 +1,64 @@
-import React, { useState } from 'react';
-import StudentAppBar from './StudentAppBar';
-import Button from '../../UI/Button';
-import Modal from '../../UI/Modal';
-import { useNavigate } from 'react-router-dom';
-import examScheduleApi from '../../api/examScheduleApi';
-import setsApi from '../../api/SetsApi';
-import { useFetchData } from '../../hooks/useFetchData';
-import TopAutoCarousel from './LightDashboardCard';
-import CreamCarouselCard from './CreamCarouselCard';
-import examImg from '../../assets/exam.png';
+import React, { useState } from "react";
+import StudentAppBar from "./StudentAppBar";
+import Button from "../../UI/Button";
+import Modal from "../../UI/Modal";
+import { useNavigate } from "react-router-dom";
+import examScheduleApi from "../../api/examScheduleApi";
+import setsApi from "../../api/SetsApi";
+import { useFetchData } from "../../hooks/useFetchData";
+import TopAutoCarousel from "./LightDashboardCard";
+import CreamCarouselCard from "./CreamCarouselCard";
+import examImg from "../../assets/exam.png";
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const user = JSON.parse(localStorage.getItem("user")) || {};
   const userName =
     user?.name ||
-    `${user?.first_name || ''} ${user?.last_name || ''}`.trim() ||
-    'User Name';
+    `${user?.first_name || ""} ${user?.last_name || ""}`.trim() ||
+    "User Name";
 
   const userImage = user?.image || user?.avatar || null;
   const userInitials = userName
-    .split(' ')
+    .split(" ")
     .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
-    .join('')
+    .join("")
     .toUpperCase();
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/');
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   // API returns: { success, message, data: [ { id, exam_title, start_datetime, end_datetime, exam_level, exam_set, remark: "LIVE" | "UPCOMING", ... } ] }
   const { data: examResponse, loading: examLoading } = useFetchData(() =>
-    examScheduleApi.getstudnetupcomeingexam(user.level, user.createdby)
+    examScheduleApi.getstudnetupcomeingexam(user.level, user.createdby),
   );
 
   // Defensive: handle either { data: [...] } or a raw array, depending on hook/api shape
   const exams = Array.isArray(examResponse)
     ? examResponse
     : examResponse?.data || [];
+  console.log("exam response", examResponse);
+  console.log("Exams", exams);
 
-  const liveExam = exams.find((exam) => exam.remark === 'LIVE');
-
+  const liveExam = exams.find((exam) => exam.remark === "LIVE");
+  console.log("LiveExam", liveExam);
+  console.log({
+    examLoading,
+    liveExam,
+    condition: !examLoading && !!liveExam,
+  });
   const startLiveExam = () => {
-    localStorage.setItem('exam_id', liveExam.id);
-    localStorage.setItem('paperset', liveExam.exam_set);
-    localStorage.setItem('paperlevel', liveExam.exam_level);
-    localStorage.setItem('Exam_Tittle', liveExam.exam_title);
-    localStorage.setItem('examType', 'live');
-    navigate('/exam-rule');
+    localStorage.setItem("exam_id", liveExam.id);
+    localStorage.setItem("paperset", liveExam.exam_set);
+    localStorage.setItem("paperlevel", liveExam.exam_level);
+    localStorage.setItem("Exam_Tittle", liveExam.exam_title);
+    localStorage.setItem("examType", "live");
+    navigate("/exam-rule");
   };
 
   // ================= PRACTICE TEST (SET SELECTION) =================
@@ -65,8 +72,9 @@ export default function StudentDashboard() {
     try {
       const res = await setsApi.getStudentSets();
       setSets(res?.data?.data || []);
+      localStorage.setItem("exam", "Practice");
     } catch (err) {
-      console.error('Failed to fetch sets', err);
+      console.error("Failed to fetch sets", err);
       setSets([]);
     } finally {
       setSetsLoading(false);
@@ -74,12 +82,11 @@ export default function StudentDashboard() {
   };
 
   const startPracticeTest = (set) => {
-    localStorage.setItem('paperset', set.id);
-    localStorage.setItem('paperlevel', user.level);
-    localStorage.setItem('examType', 'mock');
-    navigate('/exam-rule');
+    localStorage.setItem("paperset", set.id);
+    localStorage.setItem("paperlevel", user.level);
+    localStorage.setItem("examType", "mock");
+    navigate("/exam-rule");
   };
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       <StudentAppBar
@@ -99,29 +106,29 @@ export default function StudentDashboard() {
               items={
                 exams.length > 0
                   ? exams.map((exam) => (
-                    <CreamCarouselCard
-                      key={exam.id}
-                      title={`Abacus Level ${exam.exam_level} Examination`}
-                      subtitle={exam.exam_title}
-                      examDate={exam.start_datetime}
-                      startTime={exam.start_datetime}
-                      endTime={exam.end_datetime}
-                      image={examImg}
-                      isExamLive={exam.remark === 'LIVE'}
-                    />
-                  ))
+                      <CreamCarouselCard
+                        key={exam.id}
+                        title={`Abacus Level ${exam.exam_level} Examination`}
+                        subtitle={exam.exam_title}
+                        examDate={exam.start_datetime}
+                        startTime={exam.start_datetime}
+                        endTime={exam.end_datetime}
+                        image={examImg}
+                        isExamLive={exam.remark === "LIVE"}
+                      />
+                    ))
                   : [
-                    <CreamCarouselCard
-                      key="no-exam"
-                      title="No Upcoming Exams"
-                      subtitle="Please check back later"
-                      examDate="—"
-                      startTime="—"
-                      endTime="—"
-                      image={examImg}
-                      isExamLive={false}
-                    />,
-                  ]
+                      <CreamCarouselCard
+                        key="no-exam"
+                        title="No Upcoming Exams"
+                        subtitle="Please check back later"
+                        examDate="—"
+                        startTime="—"
+                        endTime="—"
+                        image={examImg}
+                        isExamLive={false}
+                      />,
+                    ]
               }
             />
           </div>
@@ -130,11 +137,18 @@ export default function StudentDashboard() {
         {/* ================= LIVE EXAM ================= */}
         {!examLoading && liveExam && (
           <div className="mt-6 bg-white rounded-2xl shadow-sm p-5">
-            <h3 className="text-base font-semibold text-slate-800">Live Exam</h3>
+            <h3 className="text-base font-semibold text-slate-800">
+              Live Exam
+            </h3>
             <p className="text-xs text-slate-500 mb-4">
               This exam is live right now — start whenever you're ready.
             </p>
-            <Button variant="green" size="lg" onClick={startLiveExam} className="w-full">
+            <Button
+              variant="green"
+              size="lg"
+              onClick={startLiveExam}
+              className="w-full"
+            >
               {liveExam.exam_title}
             </Button>
           </div>
@@ -142,11 +156,19 @@ export default function StudentDashboard() {
 
         {/* ================= PRACTICE TEST ================= */}
         <div className="mt-6 bg-white rounded-2xl shadow-sm p-5">
-          <h3 className="text-base font-semibold text-slate-800">Practice Test</h3>
+          <h3 className="text-base font-semibold text-slate-800">
+            Practice Test
+          </h3>
           <p className="text-xs text-slate-500 mb-4">
             Pick a set and practice anytime.
           </p>
-          <Button variant="primary" size="lg" onClick={openPracticeModal} className="w-full">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={openPracticeModal}
+            className="w-full"
+            disabled={liveExam}
+          >
             Start Practice Test
           </Button>
         </div>
@@ -158,7 +180,9 @@ export default function StudentDashboard() {
           width="max-w-md"
         >
           {setsLoading ? (
-            <p className="text-sm text-center text-slate-500 py-6">Loading sets…</p>
+            <p className="text-sm text-center text-slate-500 py-6">
+              Loading sets…
+            </p>
           ) : sets.length === 0 ? (
             <p className="text-sm text-center text-slate-500 py-6">
               No practice sets available.
