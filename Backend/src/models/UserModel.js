@@ -153,6 +153,7 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     limit = 5,
     search = "",
     individual_registration,
+    student_category
   ) => {
     const offset = (page - 1) * limit;
 
@@ -173,6 +174,11 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ? IS NULL
         OR u.individual_registration = ?
       )
+        AND (
+          ? IS NULL
+          OR ? = ''
+          OR u.student_category = ?
+        )
     `,
       [
         id,
@@ -183,6 +189,10 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         `%${search}%`,
         individual_registration ?? null,
         individual_registration,
+
+        student_category ?? null,
+        student_category ?? "",
+        student_category,
       ],
     );
 
@@ -210,6 +220,11 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ? IS NULL
         OR u.individual_registration = ?
       )
+        AND (
+          ? IS NULL
+          OR ? = ''
+          OR u.student_category = ?
+        )
     ORDER BY u.id DESC
     LIMIT ?
     OFFSET ?
@@ -223,6 +238,9 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         `%${search}%`,
         individual_registration ?? null,
         individual_registration,
+        student_category ?? null,
+        student_category ?? "",
+        student_category,
         Number(limit),
         Number(offset),
       ],
@@ -230,11 +248,11 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 
     return buildPaginationResponse(rows, page, limit, totalRecords);
   },
- findBySuperAdminId: async (id, page = 1, limit = 5, search = "") => {
-  const offset = (page - 1) * limit;
+  findBySuperAdminId: async (id, page = 1, limit = 5, search = "") => {
+    const offset = (page - 1) * limit;
 
-  const [countRows] = await pool.query(
-    `
+    const [countRows] = await pool.query(
+      `
     SELECT COUNT(*) as total
     FROM users u
     WHERE u.createdby = ?
@@ -247,20 +265,20 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         OR u.class LIKE ?
       )
     `,
-    [
-      id,
-      search,
-      `%${search}%`,
-      `%${search}%`,
-      `%${search}%`,
-      `%${search}%`,
-    ]
-  );
+      [
+        id,
+        search,
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+      ]
+    );
 
-  const totalRecords = countRows[0].total;
+    const totalRecords = countRows[0].total;
 
-  const [rows] = await pool.query(
-    `
+    const [rows] = await pool.query(
+      `
     SELECT
       u.*,
       l.level_name
@@ -281,20 +299,20 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     LIMIT ?
     OFFSET ?
     `,
-    [
-      id,
-      search,
-      `%${search}%`,
-      `%${search}%`,
-      `%${search}%`,
-      `%${search}%`,
-      Number(limit),
-      Number(offset),
-    ]
-  );
+      [
+        id,
+        search,
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+        `%${search}%`,
+        Number(limit),
+        Number(offset),
+      ]
+    );
 
-  return buildPaginationResponse(rows, page, limit, totalRecords);
-},
+    return buildPaginationResponse(rows, page, limit, totalRecords);
+  },
   ResultfindByadminId: async (id) => {
     const [rows] = await pool.query(
       `SELECT DISTINCT
@@ -332,7 +350,8 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       district_id=?,
       city=?,
       pincode=?,
-      institute_id=?
+      institute_id=?,
+      student_category=?
     WHERE id=?
   `;
 
@@ -356,6 +375,7 @@ VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
       data.city,
       data.pincode,
       data.institute_id,
+      data.student_category,
       id,
     ]);
 

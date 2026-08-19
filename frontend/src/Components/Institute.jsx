@@ -47,7 +47,7 @@ export default function Institute() {
         is_active: 1,
     });
 
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
 
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -56,6 +56,51 @@ export default function Institute() {
 
     const [states, setStates] = useState([]);
     const [districts, setDistricts] = useState([]);
+
+    // validation
+    const validateForm = () => {
+        const newErrors = {};
+
+        if (!form.institute_name.trim()) {
+            newErrors.institute_name = "Institute name is required";
+        }
+
+        if (!form.institute_contact.trim()) {
+            newErrors.institute_contact = "Contact is required";
+        } else if (!/^\d{10}$/.test(form.institute_contact)) {
+            newErrors.institute_contact = "Contact must be 10 digits";
+        }
+
+        if (!form.country_id) {
+            newErrors.country_id = "Country is required";
+        }
+
+        if (!form.state_id) {
+            newErrors.state_id = "State is required";
+        }
+
+        if (!form.district_id) {
+            newErrors.district_id = "District is required";
+        }
+
+        if (!form.city.trim()) {
+            newErrors.city = "City is required";
+        }
+
+        if (!form.address.trim()) {
+            newErrors.address = "Address is required";
+        }
+
+        if (!form.pincode.trim()) {
+            newErrors.pincode = "Pincode is required";
+        } else if (!/^\d{6}$/.test(form.pincode)) {
+            newErrors.pincode = "Pincode must be 6 digits";
+        }
+
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0;
+    };
 
     // LOAD DATA
     useEffect(() => {
@@ -101,7 +146,7 @@ export default function Institute() {
             pincode: "",
             is_active: 1,
         });
-        setError("");
+        setErrors({});
         setModalOpen(true);
     };
 
@@ -123,16 +168,25 @@ export default function Institute() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+
+        setForm((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+
+        setErrors((prev) => ({
+            ...prev,
+            [name]: "",
+        }));
     };
 
     const handleSave = async () => {
-        if (!form.institute_name.trim()) {
-            setError("Institute name is required");
+        if (!validateForm()) {
             return;
         }
 
         setSaving(true);
+
         try {
             if (editingRow) {
                 await InstituteApi.update(editingRow.id, form);
@@ -142,8 +196,11 @@ export default function Institute() {
 
             await reload();
             setModalOpen(false);
+            setErrors({});
         } catch (err) {
-            setError(err?.response?.data?.message || "Save failed");
+            setErrors({
+                form: err?.response?.data?.message || "Save failed",
+            });
         } finally {
             setSaving(false);
         }
@@ -212,31 +269,44 @@ export default function Institute() {
                         name="institute_name"
                         value={form.institute_name}
                         onChange={handleChange}
+                        error={errors.institute_name}
+                        showError={!!errors.institute_name}
                         required
                     />
 
                     <InputField
                         label="Contact"
+                        type="number"
                         name="institute_contact"
                         value={form.institute_contact}
                         onChange={handleChange}
+                        required
+                        error={errors.institute_contact}
+                        showError={!!errors.institute_contact}
+                        maxLength={10}
+                        minLength={10}
                     />
 
                     <SelectField
                         label="Country"
                         value={form.country_id}
+                        required
+                        error={errors.country_id}
+                        showError={!!errors.country_id}
                         onChange={(e) =>
                             setForm({ ...form, country_id: e.target.value, state_id: "", district_id: "" })
                         }
                         options={[
                             { label: "India", value: "1" },
-                            { label: "UAE", value: "2" },
+                            // { label: "UAE", value: "2" },
                         ]}
                     />
 
                     <SelectField
                         label="State"
                         value={form.state_id}
+                        error={errors.state_id}
+                        showError={!!errors.state_id}
                         onChange={(e) =>
                             setForm({ ...form, state_id: e.target.value, district_id: "" })
                         }
@@ -244,6 +314,7 @@ export default function Institute() {
                             label: s.name,
                             value: s.id,
                         }))}
+                        required
                     />
 
                     <SelectField
@@ -256,6 +327,9 @@ export default function Institute() {
                             label: d.name,
                             value: d.id,
                         }))}
+                        required
+                        error={errors.district_id}
+                        showError={!!errors.district_id}
                     />
 
                     <InputField
@@ -263,6 +337,8 @@ export default function Institute() {
                         name="city"
                         value={form.city}
                         onChange={handleChange}
+                        required error={errors.city}
+                        showError={!!errors.city}
                     />
 
                     <InputField
@@ -270,13 +346,22 @@ export default function Institute() {
                         name="address"
                         value={form.address}
                         onChange={handleChange}
+                        required
+                        error={errors.address}
+                        showError={!!errors.address}
                     />
 
                     <InputField
                         label="Pincode"
                         name="pincode"
+                        type="number"
                         value={form.pincode}
                         onChange={handleChange}
+                        required
+                        error={errors.pincode}
+                        showError={!!errors.pincode}
+                        maxLength={6}
+                        minLength={6}
                     />
 
                     <SelectField
@@ -289,13 +374,11 @@ export default function Institute() {
                             { label: "Active", value: 1 },
                             { label: "Inactive", value: 0 },
                         ]}
+                        required
+                        error={errors.is_active}
+                        showError={!!errors.is_active}
                     />
 
-                    {error && (
-                        <div className="col-span-2 text-red-600 text-sm">
-                            {error}
-                        </div>
-                    )}
 
                     <div className="col-span-2 flex justify-end gap-2">
                         <button

@@ -1,207 +1,232 @@
-import React, { useState } from 'react';
-import { useFetchData } from '../hooks/useFetchData';
-import setsApi from '../api/SetsApi';
-import DataTable from '../UI/DataTable';
-import Modal from '../UI/Modal';
-import DeleteConfirmModal from '../UI/DeleteConfirmModal';
+import React, { useState } from "react";
+import { useFetchData } from "../hooks/useFetchData";
+import setsApi from "../api/SetsApi";
+import DataTable from "../UI/DataTable";
+import Modal from "../UI/Modal";
+import DeleteConfirmModal from "../UI/DeleteConfirmModal";
 import useTableState from "../hooks/useTableState";
+import InputField from "../UI/InputField";
+
 export default function Sets() {
-    const [adminId, setAdminId] = useState(localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).id : null );
-    const {
+  const {
     page,
     limit,
     search,
     debouncedSearch,
-
     setPage,
     handleSearchChange,
     handleLimitChange,
-} = useTableState();
+  } = useTableState();
+
   const {
     data: response,
     loading,
-    reload
-} = useFetchData(
-    () => {
-        if (!adminId)
-            return Promise.resolve(null);
-
-        return setsApi.getbyadminid(
-            adminId,
-            page,
-            limit,
-            debouncedSearch
-        );
-    },
-    [adminId, page, limit, debouncedSearch],
+    reload,
+  } = useFetchData(
+    () => setsApi.getByAdmin(page, limit, debouncedSearch),
+    [page, limit, debouncedSearch],
     { preserveResponse: true }
-);
-const sets = response?.data || [];
+  );
 
-const totalPages =
-    response?.pagination?.totalPages || 1;
+  const sets = response?.data || [];
+  const totalPages = response?.pagination?.totalPages || 1;
+  const totalRecords = response?.pagination?.totalRecords || 0;
 
-const totalRecords =
-    response?.pagination?.totalRecords || 0;
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingRow, setEditingRow] = useState(null);
-    const [value, setValue] = useState('');
-    const [error, setError] = useState('');
-    const [saving, setSaving] = useState(false);
-    const [deleteOpen, setDeleteOpen] = useState(false);
-    const [deleteTarget, setDeleteTarget] = useState(null);
-    const [deleteLoading, setDeleteLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState(null);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-    const columns = [
-        // { key: 'id', label: 'ID' },
-        { key: 'set_name', label: 'Set Name' },
-    ];
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-    const openCreate = () => {
-        setEditingRow(null);
-        setValue('');
-        setError('');
-        setModalOpen(true);
-    };
+  const columns = [
+    {
+      key: "set_name",
+      label: "Set Name",
+    },
+  ];
 
-    const openEdit = (row) => {
-        setEditingRow(row);
-        setValue(row?.set_name ?? '');
-        setError('');
-        setModalOpen(true);
-    };
+  // Open modal for creating a new set
+  const openCreate = () => {
+    setEditingRow(null);
+    setValue("");
+    setError("");
+    setModalOpen(true);
+  };
 
-    const closeModal = () => {
-        setModalOpen(false);
-        setEditingRow(null);
-        setValue('');
-        setError('');
-    };
+  // Open modal for editing an existing set
+  const openEdit = (row) => {
+    setEditingRow(row);
+    setValue(row?.set_name ?? "");
+    setError("");
+    setModalOpen(true);
+  };
 
-    const handleSave = async () => {
-        if (!value || !value.trim()) {
-            setError('This field is required');
-            return;
+  // Close and reset the form modal
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingRow(null);
+    setValue("");
+    setError("");
+  };
+
+  // Create or update a set
+  const handleSave = async () => {
+    const setName = value.trim().toUpperCase();
+
+    if (!setName) {
+      setError("Set name is required");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      // Do not send createdby.
+      // The backend gets the authenticated user from the JWT.
+      if (editingRow?.id) {
+        await setsApi.update(editingRow.id, {
+          set_name: setName,
+        });
+      } else {
+        await setsApi.create({
+          set_name: setName,
+        });
+      }
+
+      await reload();
+      closeModal();
+    } catch (err) {
+      const errorMessage =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Unable to save set";
+
+      if (errorMessage.toLowerCase().includes("already exists")) {
+        setError("This set already exists. Please use a different name.");
+      } else {
+        setError(errorMessage);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Open delete confirmation modal
+  const handleDeleteClick = (row) => {
+    setDeleteTarget(row);
+    setDeleteOpen(true);
+  };
+
+  // Delete the selected set
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget?.id) return;
+
+    setDeleteLoading(true);
+
+    try {
+      await setsApi.delete(deleteTarget.id);
+
+      await reload();
+
+      setDeleteOpen(false);
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error("Delete set error:", err);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        data={sets}
+        title="Sets"
+        currentPage={page}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        onPageChange={setPage}
+        onLimitChange={handleLimitChange}
+        searchTerm={search}
+        onSearchChange={handleSearchChange}
+        onCreate={openCreate}
+        onEdit={openEdit}
+        onDelete={handleDeleteClick}
+        searchable
+        pagination
+        showActions
+        loading={loading}
+        exportable={false}
+      />
+
+      <DeleteConfirmModal
+        open={deleteOpen}
+        onClose={() => {
+          setDeleteOpen(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        loading={deleteLoading}
+        message={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.set_name}"?`
+            : undefined
         }
+      />
 
-        setSaving(true);
-        try {
-            const payload = { set_name: value, createdby: adminId }; // assuming admin id is 3
-            if (editingRow && editingRow.id) {
-                await setsApi.update(editingRow.id, payload);
-            } else {
-                await setsApi.create(payload);
-            }
-            await reload();
-            closeModal();
-        } catch (err) {
-            const errorMsg = err?.response?.data?.error || err?.response?.data?.message || 'Save failed';
-            if (errorMsg.includes('already exists')) {
-                setError('This set already exists. Please use a different name.');
-            } else {
-                setError(errorMsg);
-            }
-        } finally {
-            setSaving(false);
-        }
-    };
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingRow ? "Edit Set" : "Create Set"}
+      >
+        <div className="space-y-4">
+          <div>
+            <InputField
+              label="Set Name"
+              value={value}
+              maxLength={1}
+              placeholder="A, B, C..."
+              required
+              error={error}
+              showError={!!error}
+              onChange={(e) => {
+                const setName = e.target.value
+                  .toUpperCase()
+                  .replace(/[^A-Z]/g, "");
 
-    const handleDeleteClick = (row) => {
-        setDeleteTarget(row);
-        setDeleteOpen(true);
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!deleteTarget) return;
-        setDeleteLoading(true);
-        try {
-            await setsApi.delete(deleteTarget.id);
-            await reload();
-            setDeleteOpen(false);
-            setDeleteTarget(null);
-        } catch (err) {
-            // optionally show error
-        } finally {
-            setDeleteLoading(false);
-        }
-    };
-
-    return (
-        <>
-            {/* <DataTable
-                columns={columns}
-                data={sets}
-                title="Sets"
-                onCreate={openCreate}
-                onEdit={openEdit}
-                onDelete={handleDeleteClick}
-                searchable
-                pagination
-                showActions
-                loading={loading}
-                exportable={false}
-            /> */}
-<DataTable
-    columns={columns}
-    data={sets}
-    title="Sets"
-
-    currentPage={page}
-    totalPages={totalPages}
-    totalRecords={totalRecords}
-
-    onPageChange={setPage}
-
-    onLimitChange={handleLimitChange}
-
-    searchTerm={search}
-
-    onSearchChange={handleSearchChange}
-
-    onCreate={openCreate}
-    onEdit={openEdit}
-    onDelete={handleDeleteClick}
-
-    searchable
-    pagination
-    showActions
-    loading={loading}
-    exportable={false}
-/>
-            <DeleteConfirmModal
-                open={deleteOpen}
-                onClose={() => setDeleteOpen(false)}
-                onConfirm={handleDeleteConfirm}
-                loading={deleteLoading}
-                message={deleteTarget ? `Are you sure you want to delete "${deleteTarget.set_name}"?` : undefined}
+                setValue(setName);
+                setError("");
+              }}
             />
+          </div>
 
-            <Modal open={modalOpen} onClose={closeModal} title={editingRow ? 'Edit Set' : 'Create Set'}>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Set Name</label>
-                        <input
-                            type="text"
-                            value={value}
-                            maxLength={1}
-                            onChange={(e) => {
-                                const v = e.target.value.toUpperCase().replace(/[^A-Z]/g, "");
-                                setValue(v);
-                            }}
-                            className="w-full border border-slate-300 rounded px-3 py-2"
-                            placeholder="A, B, C, ..."
-                        />
-                        {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
-                    </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 bg-gray-200 rounded"
+              disabled={saving}
+            >
+              Close
+            </button>
 
-                    <div className="flex justify-end gap-2">
-                        <button onClick={closeModal} className="px-4 py-2 bg-gray-200 rounded">Close</button>
-                        <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-blue-600 text-white rounded">
-                            {saving ? 'Saving...' : 'Save'}
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-        </>
-    );
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
 }

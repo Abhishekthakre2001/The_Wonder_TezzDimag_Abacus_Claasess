@@ -113,7 +113,7 @@ export default function AddStudent() {
   };
 
   // ---------------- CREATE / UPDATE ----------------
-const handleCancel = () => {
+  const handleCancel = () => {
     navigate("/admins");
 
     setFormData({
@@ -230,7 +230,7 @@ const handleCancel = () => {
 
   // ---------------- CANCEL ----------------
 
-  
+
 
   // ---------------- LOAD EDIT DATA ----------------
 
@@ -309,8 +309,6 @@ const handleCancel = () => {
             label="Date of Birth"
             value={formData.dob}
             onChange={handleChange("dob")}
-            error={errors.dob}
-            showError={!!errors.dob}
             error={errors.dob}
             showError={!!errors.dob}
             required

@@ -20,11 +20,29 @@ exports.getAll = async (req, res) => {
       search || ""
     );
 
-    res.json(result);
+    const formattedData = (result.data || [])
+      .map((state) => ({
+        ...state,
+        name: state.name
+          ? state.name.charAt(0).toUpperCase() +
+          state.name.slice(1).toLowerCase()
+          : state.name,
+      }))
+      .sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+    res.json({
+      ...result,
+      data: formattedData,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: error.message,
+    });
   }
 };
+
 
 exports.getById = async (req, res) => {
   const [[row]] = await StateModel.findById(req.params.id);
@@ -32,8 +50,8 @@ exports.getById = async (req, res) => {
 };
 
 exports.getDistrictByState = async (req, res) => {
-    const data = await StateModel.getDistrictByState(req.params.id);
-    res.json(data);
+  const data = await StateModel.getDistrictByState(req.params.id);
+  res.json(data);
 };
 
 exports.update = async (req, res) => {

@@ -43,10 +43,11 @@ const ExamRegistration = {
             createdby,
             usertype,
             status,
-            individual_registration
+            individual_registration,
+            student_category
         )
         VALUES
-        (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         [
           data.name,
           data.class,
@@ -54,7 +55,7 @@ const ExamRegistration = {
           data.institute_id,
           data.dob,
           data.address,
-          0,
+          data.state_id,
           data.district_id,
           data.city,
           data.pincode,
@@ -65,6 +66,7 @@ const ExamRegistration = {
           "Student",
           1,
           1,
+          data.studentcategory || data.student_category
         ]
       );
 

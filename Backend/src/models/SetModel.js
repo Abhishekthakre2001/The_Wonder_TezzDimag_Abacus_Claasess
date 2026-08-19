@@ -1,81 +1,159 @@
 const pool = require("../config/db");
-const { buildPaginationResponse } = require("../utils/getPaginationParams");
+const {
+  buildPaginationResponse,
+} = require("../utils/getPaginationParams");
 
 module.exports = {
-  create: (data) =>
-    pool.query("INSERT INTO sets (set_name, createdby) VALUES (?, ?)", [
-      data.set_name,
-      data.createdby,
-    ]),
+  /**
+   * Create a set for a user.
+   */
+  create: (setName, userId) =>
+    pool.query(
+      `
+        INSERT INTO sets (
+          set_name,
+          createdby
+        )
+        VALUES (?, ?)
+      `,
+      [setName, userId]
+    ),
 
-  findBySetNameAndUser: (set_name, createdby) =>
-    pool.query("SELECT * FROM sets WHERE set_name = ? AND createdby = ?", [
-      set_name,
-      createdby,
-    ]),
+  /**
+   * Find a set by name for a specific user.
+   */
+  findBySetNameAndUser: (setName, userId) =>
+    pool.query(
+      `
+        SELECT *
+        FROM sets
+        WHERE set_name = ?
+          AND createdby = ?
+      `,
+      [setName, userId]
+    ),
 
-  findAll: () => pool.query("SELECT * FROM sets"),
-
-  findbyadminid: async (id, page = 1, limit = 5, search = "") => {
+  /**
+   * Get all sets belonging to a specific user.
+   */
+  findAllByUser: async (
+    userId,
+    page = 1,
+    limit = 5,
+    search = ""
+  ) => {
     const offset = (page - 1) * limit;
+    const searchPattern = `%${search}%`;
 
-    // Count Query
+    // Get total number of matching records.
     const [countRows] = await pool.query(
       `
-    SELECT COUNT(*) AS total
-    FROM sets
-
-    WHERE createdby = ?
-      AND (
-        ? = ''
-        OR set_name LIKE ?
-      )
-    `,
-      [id, search, `%${search}%`],
+        SELECT COUNT(*) AS total
+        FROM sets
+        WHERE createdby = ?
+          AND (
+            ? = ''
+            OR set_name LIKE ?
+          )
+      `,
+      [
+        userId,
+        search,
+        searchPattern,
+      ]
     );
 
     const totalRecords = countRows[0].total;
 
-    // Main Query
+    // Get paginated records.
     const [rows] = await pool.query(
       `
-    SELECT *
-    FROM sets
-
-    WHERE createdby = ?
-      AND (
-        ? = ''
-        OR set_name LIKE ?
-      )
-
-    ORDER BY id DESC
-
-    LIMIT ?
-    OFFSET ?
-    `,
-      [id, search, `%${search}%`, Number(limit), Number(offset)],
+        SELECT
+          id,
+          set_name,
+          createdby
+        FROM sets
+        WHERE createdby = ?
+          AND (
+            ? = ''
+            OR set_name LIKE ?
+          )
+        ORDER BY id DESC
+        LIMIT ?
+        OFFSET ?
+      `,
+      [
+        userId,
+        search,
+        searchPattern,
+        Number(limit),
+        Number(offset),
+      ]
     );
 
-    return buildPaginationResponse(rows, page, limit, totalRecords);
+    return buildPaginationResponse(
+      rows,
+      page,
+      limit,
+      totalRecords
+    );
   },
 
-  findById: (id) => pool.query("SELECT * FROM sets WHERE id = ?", [id]),
+  /**
+   * Find a specific set owned by a user.
+   */
+  findByIdAndUser: (id, userId) =>
+    pool.query(
+      `
+        SELECT *
+        FROM sets
+        WHERE id = ?
+          AND createdby = ?
+      `,
+      [id, userId]
+    ),
 
-  update: (id, data) =>
-    pool.query("UPDATE sets SET set_name=? WHERE id=?", [data.set_name, id]),
+  /**
+   * Update a set only if it belongs to the user.
+   */
+  update: (id, userId, setName) =>
+    pool.query(
+      `
+        UPDATE sets
+        SET set_name = ?
+        WHERE id = ?
+          AND createdby = ?
+      `,
+      [setName, id, userId]
+    ),
 
-  remove: (id) => pool.query("DELETE FROM sets WHERE id = ?", [id]),
+  /**
+   * Delete a set only if it belongs to the user.
+   */
+  remove: (id, userId) =>
+    pool.query(
+      `
+        DELETE FROM sets
+        WHERE id = ?
+          AND createdby = ?
+      `,
+      [id, userId]
+    ),
 
+  /**
+   * Get sets available to a student based on
+   * the student's creator/admin and level.
+   */
   getStudentSets: async (createdby, level) => {
-    // Step 1: Get level id
+    // Find the level belonging to this admin/user.
     const [levelRows] = await pool.query(
       `
-    SELECT id
-    FROM levels
-    WHERE level = ?
-      AND createdby = ?
-    LIMIT 1
-    `,
+        SELECT id
+        FROM levels
+        WHERE level = ?
+          AND createdby = ?
+        LIMIT 1
+      `,
       [level, createdby]
     );
 
@@ -85,39 +163,40 @@ module.exports = {
 
     const levelId = levelRows[0].id;
 
-    console.log("levelId",levelId)
-
-    // Step 2: Get unique set_ids from question_papers
+    // Find all sets used by question papers
+    // for this level and creator.
     const [paperRows] = await pool.query(
       `
-    SELECT DISTINCT set_id
-    FROM question_papers
-    WHERE level_id = ?
-      AND created_by = ?
-    `,
+        SELECT DISTINCT set_id
+        FROM question_papers
+        WHERE level_id = ?
+          AND created_by = ?
+          AND set_id IS NOT NULL
+      `,
       [levelId, createdby]
     );
-
-    console.log("paperRows",paperRows)
 
     if (paperRows.length === 0) {
       return [[]];
     }
 
-    // Extract set ids
     const setIds = paperRows.map((row) => row.set_id);
 
-    // Step 3: Get sets from sets table
-    const placeholders = setIds.map(() => "?").join(",");
+    const placeholders = setIds
+      .map(() => "?")
+      .join(",");
 
+    // Return only sets belonging to the same creator.
     return pool.query(
       `
-    SELECT id, set_name
-    FROM sets
-    WHERE createdby = ?
-      AND id IN (${placeholders})
-    ORDER BY set_name ASC
-    `,
+        SELECT
+          id,
+          set_name
+        FROM sets
+        WHERE createdby = ?
+          AND id IN (${placeholders})
+        ORDER BY set_name ASC
+      `,
       [createdby, ...setIds]
     );
   },

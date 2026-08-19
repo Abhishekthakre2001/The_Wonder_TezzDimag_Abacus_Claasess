@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useFetchData } from "../hooks/useFetchData";
 import levelApi from "../api/LevelApi";
@@ -5,227 +6,273 @@ import DataTable from "../UI/DataTable";
 import Modal from "../UI/Modal";
 import DeleteConfirmModal from "../UI/DeleteConfirmModal";
 import useTableState from "../hooks/useTableState";
+import InputField from "../UI/InputField";
 
 export default function Level() {
-  const adminid = localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user")).id
-    : null;
-  const {
-    page,
-    limit,
-    search,
-    debouncedSearch,
-    setPage,
-    handleSearchChange,
-    handleLimitChange,
-  } = useTableState();
-  const {
-    data: response,
-    loading,
-    reload,
-  } = useFetchData(
-    () => levelApi.getbyadminid(adminid, page, limit, debouncedSearch),
-    [adminid, page, limit, debouncedSearch],
-    { preserveResponse: true },
-  );
-  const levels = response?.data || [];
+    const {
+        page,
+        limit,
+        search,
+        debouncedSearch,
+        setPage,
+        handleSearchChange,
+        handleLimitChange,
+    } = useTableState();
 
-  const totalPages = response?.pagination?.totalPages || 1;
+    const {
+        data: response,
+        loading,
+        reload,
+    } = useFetchData(
+        () => levelApi.getbyadminid(page, limit, debouncedSearch),
+        [page, limit, debouncedSearch],
+        { preserveResponse: true }
+    );
 
-  const totalRecords = response?.pagination?.totalRecords || 0;
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingRow, setEditingRow] = useState(null);
+    const levels = response?.data || [];
+    const totalPages = response?.pagination?.totalPages || 1;
+    const totalRecords = response?.pagination?.totalRecords || 0;
 
-  const [level, setLevel] = useState("");
-  const [levelName, setLevelName] = useState("");
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingRow, setEditingRow] = useState(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+    const [level, setLevel] = useState("");
+    const [levelName, setLevelName] = useState("");
 
-  const columns = [
-    { key: "level", label: "Level" },
-    { key: "level_name", label: "Level Name" },
-  ];
+    // Field-level errors
+    const [errors, setErrors] = useState({});
 
-  const openCreate = () => {
-    setEditingRow(null);
-    setLevel("");
-    setLevelName("");
-    setError("");
-    setModalOpen(true);
-  };
+    const [saving, setSaving] = useState(false);
 
-  const openEdit = (row) => {
-    setEditingRow(row);
-    setLevel(row?.level ?? "");
-    setLevelName(row?.level_name ?? "");
-    setError("");
-    setModalOpen(true);
-  };
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditingRow(null);
-    setLevel("");
-    setLevelName("");
-    setError("");
-  };
+    const columns = [
+        { key: "level", label: "Level" },
+        { key: "level_name", label: "Level Name" },
+    ];
 
-  const handleSave = async () => {
-    if (!level || !level.toString().trim()) {
-      setError("Level is required");
-      return;
-    }
+    const openCreate = () => {
+        setEditingRow(null);
+        setLevel("");
+        setLevelName("");
+        setErrors({});
+        setModalOpen(true);
+    };
 
-    if (!levelName || !levelName.trim()) {
-      setError("Level name is required");
-      return;
-    }
+    const openEdit = (row) => {
+        setEditingRow(row);
+        setLevel(row?.level ?? "");
+        setLevelName(row?.level_name ?? "");
+        setErrors({});
+        setModalOpen(true);
+    };
 
-    setSaving(true);
-    try {
-      const payload = {
-        level,
-        level_name: levelName,
-        createdby: adminid,
-      };
+    const closeModal = () => {
+        setModalOpen(false);
+        setEditingRow(null);
+        setLevel("");
+        setLevelName("");
+        setErrors({});
+    };
 
-      if (editingRow && editingRow.id) {
-        await levelApi.update(editingRow.id, payload);
-      } else {
-        await levelApi.create(payload);
-      }
+    const handleSave = async () => {
+        const newErrors = {};
 
-      await reload();
-      closeModal();
-    } catch (err) {
-      const errorMsg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        "Save failed";
-
-      if (errorMsg.includes("already exists")) {
-        setError("This level already exists. Please use a different value.");
-      } else {
-        setError(errorMsg);
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeleteClick = (row) => {
-    setDeleteTarget(row);
-    setDeleteOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
-
-    setDeleteLoading(true);
-    try {
-      await levelApi.delete(deleteTarget.id);
-      await reload();
-      setDeleteOpen(false);
-      setDeleteTarget(null);
-    } catch (err) {
-      // handle delete error if needed
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <DataTable
-        columns={columns}
-        data={levels}
-        title="Levels"
-        currentPage={page}
-        totalPages={totalPages}
-        totalRecords={totalRecords}
-        onPageChange={setPage}
-        onLimitChange={handleLimitChange}
-        searchTerm={search}
-        onSearchChange={handleSearchChange}
-        onCreate={openCreate}
-        onEdit={openEdit}
-        onDelete={handleDeleteClick}
-        searchable
-        pagination
-        showActions
-        loading={loading}
-        exportable={false}
-      />
-      <DeleteConfirmModal
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        loading={deleteLoading}
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete "${deleteTarget.level}"?`
-            : undefined
+        if (!level || !level.toString().trim()) {
+            newErrors.level = "Level is required";
         }
-      />
 
-      <Modal
-        open={modalOpen}
-        onClose={closeModal}
-        title={editingRow ? "Edit Level" : "Create Level"}
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Level
-            </label>
-            <input
-              type="text"
-              value={level}
-              onChange={(e) => {
-                const numericValue = e.target.value.replace(/[^0-9]/g, "");
-                setLevel(numericValue);
-              }}
-              className="w-full border border-slate-300 rounded px-3 py-2"
-              placeholder="Enter numeric level (e.g., 1, 2, 3)"
+        if (!levelName || !levelName.trim()) {
+            newErrors.levelName = "Level name is required";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
+        setSaving(true);
+        setErrors({});
+
+        try {
+            const payload = {
+                level,
+                level_name: levelName.trim(),
+            };
+
+            if (editingRow?.id) {
+                await levelApi.update(editingRow.id, payload);
+            } else {
+                await levelApi.create(payload);
+            }
+
+            await reload();
+            closeModal();
+        } catch (err) {
+            const errorMsg =
+                err?.response?.data?.error ||
+                err?.response?.data?.message ||
+                "Save failed";
+
+            if (errorMsg.toLowerCase().includes("already exists")) {
+                setErrors({
+                    level: "This level already exists. Please use a different value.",
+                });
+            } else {
+                setErrors({
+                    form: errorMsg,
+                });
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteClick = (row) => {
+        setDeleteTarget(row);
+        setDeleteOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+
+        setDeleteLoading(true);
+
+        try {
+            await levelApi.delete(deleteTarget.id);
+
+            await reload();
+
+            setDeleteOpen(false);
+            setDeleteTarget(null);
+        } catch (err) {
+            console.error("Delete level error:", err);
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <DataTable
+                columns={columns}
+                data={levels}
+                title="Levels"
+                currentPage={page}
+                totalPages={totalPages}
+                totalRecords={totalRecords}
+                onPageChange={setPage}
+                onLimitChange={handleLimitChange}
+                searchTerm={search}
+                onSearchChange={handleSearchChange}
+                onCreate={openCreate}
+                onEdit={openEdit}
+                onDelete={handleDeleteClick}
+                searchable
+                pagination
+                showActions
+                loading={loading}
+                exportable={false}
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Level Name
-            </label>
-            <input
-              type="text"
-              value={levelName}
-              onChange={(e) => setLevelName(e.target.value)}
-              className="w-full border border-slate-300 rounded px-3 py-2"
-              placeholder="Enter level name (e.g., Beginner)"
+            <DeleteConfirmModal
+                open={deleteOpen}
+                onClose={() => {
+                    setDeleteOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+                loading={deleteLoading}
+                message={
+                    deleteTarget
+                        ? `Are you sure you want to delete "${deleteTarget.level}"?`
+                        : undefined
+                }
             />
-          </div>
 
-          {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+            <Modal
+                open={modalOpen}
+                onClose={closeModal}
+                title={editingRow ? "Edit Level" : "Create Level"}
+            >
+                <div className="space-y-4">
 
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={closeModal}
-              className="px-4 py-2 bg-gray-200 rounded"
-            >
-              Close
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </>
-  );
+                    {/* Level */}
+                    <InputField
+                        label="Level"
+                        type="text"
+                        value={level}
+                        onChange={(e) => {
+                            const numericValue = e.target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                            );
+
+                            setLevel(numericValue);
+
+                            setErrors((prev) => ({
+                                ...prev,
+                                level: "",
+                                form: "",
+                            }));
+                        }}
+                        placeholder="Enter numeric level (e.g., 1, 2, 3)"
+                        required
+                        error={errors.level}
+                        showError={!!errors.level}
+                    />
+
+                    {/* Level Name */}
+                    <InputField
+                        label="Level Name"
+                        type="text"
+                        value={levelName}
+                        onChange={(e) => {
+                            setLevelName(e.target.value);
+
+                            setErrors((prev) => ({
+                                ...prev,
+                                levelName: "",
+                                form: "",
+                            }));
+                        }}
+                        placeholder="Enter level name (e.g., Beginner)"
+                        required
+                        error={errors.levelName}
+                        showError={!!errors.levelName}
+                    />
+
+                    {/* API / General Error */}
+                    {errors.form && (
+                        <p className="text-sm text-red-600">
+                            {errors.form}
+                        </p>
+                    )}
+
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="px-4 py-2 bg-gray-200 rounded"
+                            disabled={saving}
+                        >
+                            Close
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                        >
+                            {saving ? "Saving..." : "Save"}
+                        </button>
+                    </div>
+
+                </div>
+            </Modal>
+        </>
+    );
 }

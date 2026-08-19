@@ -28,6 +28,7 @@ const initialFormData = {
   district_id: "",
   pincode: "",
   level: "",
+  student_category: "",
   username: "",
   password: "",
   confirmPassword: "",
@@ -80,6 +81,17 @@ export default function Registration() {
     label: item.name,
     value: item.id,
   }));
+
+  const studentCategoryOptions = [
+    {
+      label: "Abacus",
+      value: "Abacus",
+    },
+    {
+      label: "Vedic",
+      value: "Vedic",
+    },
+  ];
 
   const nameRegex = /^[A-Za-z ]+$/;
   const mobileRegex = /^[0-9]{10}$/;
@@ -186,6 +198,10 @@ export default function Registration() {
       case "dob":
         if (!value)
           return "Select DOB";
+        break;
+
+      case "student_category":
+        if (!value) return "Student Category is required";
         break;
 
       case "state_id":
@@ -420,6 +436,16 @@ export default function Registration() {
                   required
                   error={errors.level}
                   showError={!!errors.level}
+                />
+
+                <SelectField
+                  label="Student Category"
+                  value={formData.student_category}
+                  options={studentCategoryOptions}
+                  onChange={handleChange("student_category")}
+                  required
+                  error={errors.student_category}
+                  showError={!!errors.student_category}
                 />
 
                 <SelectField

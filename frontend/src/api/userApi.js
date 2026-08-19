@@ -11,14 +11,32 @@ const userApi = {
     limit = 5,
     search = "",
     individual_registration,
-  ) =>
-    axiosInstance.get(
-      `/users/admin/${id}?page=${page}&limit=${limit}&search=${search}${
-        individual_registration !== undefined
-          ? `&individual_registration=${individual_registration}`
-          : ""
-      }`,
-    ),
+    studentCategory
+  ) => {
+    const params = new URLSearchParams();
+
+    params.append("page", page);
+    params.append("limit", limit);
+
+    if (search) {
+      params.append("search", search);
+    }
+
+    if (individual_registration !== undefined) {
+      params.append(
+        "individual_registration",
+        individual_registration
+      );
+    }
+
+    if (studentCategory) {
+      params.append("student_category", studentCategory);
+    }
+
+    return axiosInstance.get(
+      `/users/admin/${id}?${params.toString()}`
+    );
+  },
   getBySuperAdminId: (id, page = 1, limit = 5, search = "") =>
     axiosInstance.get(
       `/users/super-admin/admins/${id}?page=${page}&limit=${limit}&search=${search}`,

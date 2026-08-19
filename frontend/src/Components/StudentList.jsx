@@ -10,9 +10,11 @@ import { useDelete } from "../hooks/useDelete";
 import useTableState from "../hooks/useTableState";
 import { downloadExcelFile } from "../utils/downloadExcelFile";
 import Tabs from "../UI/Tabs";
+import SelectField from "../UI/SelectField";
 
 export default function StudentList() {
   const navigate = useNavigate();
+  const [studentCategory, setStudentCategory] = useState("");
   const [activeTab, setActiveTab] = useState(0);
   const [registrationType, setRegistrationType] = useState(undefined);
   const {
@@ -49,9 +51,10 @@ export default function StudentList() {
         limit,
         debouncedSearch,
         registrationType,
+        studentCategory
       );
     },
-    [page, limit, debouncedSearch, activeTab, registrationType],
+    [page, limit, debouncedSearch, activeTab, registrationType, studentCategory],
     { preserveResponse: true },
   );
 
@@ -76,25 +79,32 @@ export default function StudentList() {
   };
 
   const columns = [
-    // {
-    //     key: "id",
-    //     label: "Sr. No.",
-    //     render: (value, row, index, serial) => serial + 1
-    // },
+
     {
       key: "name",
       label: "Student Name",
       sortable: true,
       render: (value) => <span className="font-medium">{value}</span>,
     },
-    // {
-    //     key: "class",
-    //     label: "Class",
-    //     sortable: true
-    // },
+
+    {
+      key: "createdat",
+      label: "Reg. Date",
+      sortable: true,
+      isDate: true,
+      render: (value) =>
+        value ? new Date(value).toLocaleDateString("en-GB") : "",
+    },
+
     {
       key: "class",
       label: "Class",
+      sortable: true,
+      render: (value) => value || "N/A",
+    },
+    {
+      key: "student_category",
+      label: "Category",
       sortable: true,
       render: (value) => value || "N/A",
     },
@@ -124,25 +134,10 @@ export default function StudentList() {
       isDate: true,
 
       render: (value) =>
-        value ? new Date(value).toLocaleDateString("en-GB") : "",
+        value ? new Date(value).toLocaleDateString("en-GB") : "-",
     },
 
-    // {
-    //     key: "level",
-    //     label: "Level",
-    //     sortable: true,
-    //     render: (value) => (
-    //         <span
-    //             className="px-2 py-1 rounded-full text-xs"
-    //             style={{
-    //                 backgroundColor: colors.common.blue100,
-    //                 color: colors.common.blue700
-    //             }}
-    //         >
-    //             {value}
-    //         </span>
-    //     )
-    // },
+
     {
       key: "level",
       label: "Level",
@@ -197,9 +192,9 @@ export default function StudentList() {
     if (index === 0) {
       setRegistrationType(undefined);
     } else if (index === 1) {
-      setRegistrationType(1);
-    } else {
       setRegistrationType(0);
+    } else {
+      setRegistrationType(1);
     }
   };
   return (
@@ -221,6 +216,24 @@ export default function StudentList() {
       </div>
 
       <div className="p-6">
+
+        <div className="mb-6 max-w-sm">
+          <SelectField
+            label="Student Category"
+            placeholder="Select Student Category"
+            options={[
+              { label: "All", value: "" },
+              { label: "Abacus", value: "Abacus" },
+              { label: "Vedic", value: "Vedic" },
+            ]}
+            value={studentCategory}
+            onChange={(e) => {
+              setStudentCategory(e.target.value);
+              setPage(1);
+            }}
+          />
+        </div>
+
         <Tabs
           activeTab={activeTab}
           onTabChange={handleTabChange}

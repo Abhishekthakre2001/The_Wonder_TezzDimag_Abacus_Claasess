@@ -14,8 +14,8 @@ const UserService = {
   getUserById: (id) => UserModel.findById(id),
 
   // getUserByadminId: (id) => UserModel.findByadminId(id),
-  getUserByadminId: (id, page, limit, search, individual_registration) =>
-    UserModel.findByadminId(id, page, limit, search, individual_registration),
+  getUserByadminId: (id, page, limit, search, individual_registration, student_category) =>
+    UserModel.findByadminId(id, page, limit, search, individual_registration, student_category),
   getAdminBySuperAdminId: (id, page, limit, search) =>
     UserModel.findBySuperAdminId(id, page, limit, search),
 

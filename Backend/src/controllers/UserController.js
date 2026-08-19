@@ -23,13 +23,17 @@ exports.getUserById = async (req, res) => {
 
 exports.getUserByadminId = async (req, res) => {
   const { page, limit, search } = getPaginationParams(req);
-  const { individual_registration } = req.query;
+   const {
+    individual_registration,
+    student_category
+  } = req.query;
   const result = await UserService.getUserByadminId(
     req.params.id,
     page,
     limit,
     search,
     individual_registration,
+    student_category
   );
 
   res.json(result);

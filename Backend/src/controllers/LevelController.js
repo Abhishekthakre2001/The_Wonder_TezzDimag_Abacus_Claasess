@@ -1,77 +1,202 @@
 const LevelModel = require("../models/LevelModel");
-const { getPaginationParams } = require("../utils/getPaginationParams");
+const {
+  getPaginationParams,
+} = require("../utils/getPaginationParams");
 
 exports.create = async (req, res) => {
   try {
-    // Check if level already exists for this user
-    const [[existing]] = await LevelModel.findByLevelAndUser(
-      req.body.level,
-      req.body.createdby,
-    );
-    if (existing) {
-      return res
-        .status(400)
-        .json({ error: "Level already exists for this user" });
+    const userId = req.user.id;
+    const { level, level_name } = req.body;
+
+    if (!level || !level_name) {
+      return res.status(400).json({
+        error: "level and level_name are required",
+      });
     }
 
-    const [result] = await LevelModel.create(req.body);
-    res.status(201).json({
-      id: result.insertId,
-      level: req.body.level,
-      level_name: req.body.level_name,
+    // Check if level already exists for this user
+    const [existingRows] = await LevelModel.findByLevelAndUser(
+      level,
+      userId
+    );
+
+    if (existingRows.length > 0) {
+      return res.status(400).json({
+        error: "Level already exists for this user",
+      });
+    }
+
+    const [result] = await LevelModel.create({
+      level,
+      level_name,
+    }, userId);
+
+    return res.status(201).json({
+      success: true,
+      message: "Level created successfully",
+      data: {
+        id: result.insertId,
+        level,
+        level_name,
+      },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Create level error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
 
 exports.getAll = async (req, res) => {
-  const [rows] = await LevelModel.findAll();
-  res.json(rows);
+  try {
+    const [rows] = await LevelModel.findAll();
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (error) {
+    console.error("Get all levels error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
 };
 
 exports.getById = async (req, res) => {
-  const [[row]] = await LevelModel.findById(req.params.id);
-  res.json(row);
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [rows] = await LevelModel.findByIdAndUser(id, userId);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: "Level not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: rows[0],
+    });
+  } catch (error) {
+    console.error("Get level by ID error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
 };
 
 exports.getAllByAdmin = async (req, res) => {
-  const { page, limit, search } = getPaginationParams(req);
+  try {
+    const { page, limit, search } = getPaginationParams(req);
+    const userId = req.user.id;
 
-  const result = await LevelModel.findAllByAdmin(
-    req.query.adminid,
-    page,
-    limit,
-    search,
-  );
+    const result = await LevelModel.findAllByAdmin(
+      userId,
+      page,
+      limit,
+      search
+    );
 
-  res.json(result);
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    console.error("Get admin levels error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
 };
+
 exports.update = async (req, res) => {
   try {
-    // Check if another level with same name exists for this user (excluding current one)
-    const [existing] = await LevelModel.findByLevelAndUser(
-      req.body.level,
-      req.body.createdby,
-    );
-    if (
-      existing &&
-      existing.length > 0 &&
-      existing[0].id !== parseInt(req.params.id)
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Level already exists for this user" });
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { level, level_name } = req.body;
+
+    if (!level || !level_name) {
+      return res.status(400).json({
+        error: "level and level_name are required",
+      });
     }
 
-    await LevelModel.update(req.params.id, req.body);
-    res.json({ success: true });
+    // Check if level belongs to current user
+    const [currentRows] = await LevelModel.findByIdAndUser(
+      id,
+      userId
+    );
+
+    if (currentRows.length === 0) {
+      return res.status(404).json({
+        error: "Level not found",
+      });
+    }
+
+    // Check duplicate level for this user
+    const [existingRows] = await LevelModel.findByLevelAndUser(
+      level,
+      userId
+    );
+
+    const duplicate = existingRows.find(
+      (item) => item.id !== Number(id)
+    );
+
+    if (duplicate) {
+      return res.status(400).json({
+        error: "Level already exists for this user",
+      });
+    }
+
+    await LevelModel.update(id, userId, {
+      level,
+      level_name,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Level updated successfully",
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Update level error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
   }
 };
 
 exports.remove = async (req, res) => {
-  await LevelModel.remove(req.params.id);
-  res.json({ success: true });
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const [result] = await LevelModel.remove(id, userId);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        error: "Level not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Level deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete level error:", error);
+
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
 };

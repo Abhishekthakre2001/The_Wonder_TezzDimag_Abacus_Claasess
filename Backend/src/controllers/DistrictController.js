@@ -10,17 +10,47 @@ exports.create = async (req, res) => {
     }
 };
 
-exports.getAll = async (req, res) => {
-    const { page, limit, search } = req.query;
 
-    const result = await DistrictModel.findAllPaginated(
-        page || 1,
-        limit || 10,
-        search || ""
-    );
+const toTitleCase = (value) => {
+    if (!value) return value;
 
-    res.json(result);
+    return value
+        .toLowerCase()
+        .split(" ")
+        .map((word) =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        )
+        .join(" ");
 };
+
+exports.getAll = async (req, res) => {
+    try {
+        const { page, limit, search } = req.query;
+
+        const result = await DistrictModel.findAllPaginated(
+            page || 1,
+            limit || 10,
+            search || ""
+        );
+
+        const formattedData = (result.data || [])
+            .map((district) => ({
+                ...district,
+                name: toTitleCase(district.name),
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        res.json({
+            ...result,
+            data: formattedData,
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+        });
+    }
+};
+
 
 exports.exportData = async (req, res) => {
     const { search, format } = req.query;

@@ -1,17 +1,36 @@
-// src/api/userApi.js
 import axiosInstance from "./axiosInstance";
 
 const setsApi = {
+  // Get all sets
   getAll: () => axiosInstance.get("/sets"),
-  getbyid: (id) => axiosInstance.get(`/sets/${id}`),
+
+  // Get a single set
+  getById: (id) => axiosInstance.get(`/sets/${id}`),
+
+  // Get sets available to the logged-in student
   getStudentSets: () => axiosInstance.get("/sets/student/sets"),
-  // getbyadminid: (id) => axiosInstance.get(`/sets/admin/${id}`),
-  getbyadminid: (id, page = 1, limit = 5, search = "") =>
-    axiosInstance.get(
-      `/sets/admin/${id}?page=${page}&limit=${limit}&search=${search}`,
-    ),
+
+  // Get sets belonging to the logged-in user
+  getByAdmin: (page = 1, limit = 5, search = "") =>
+    axiosInstance.get("/sets/admin", {
+      params: {
+        page,
+        limit,
+        search,
+      },
+    }),
+
+  // Create a set
+  // User ID is obtained from JWT on the backend.
   create: (payload) => axiosInstance.post("/sets", payload),
-  update: (id, payload) => axiosInstance.put(`/sets/${id}`, payload),
+
+  // Update a set
+  // Ownership is verified using the JWT user ID on the backend.
+  update: (id, payload) =>
+    axiosInstance.put(`/sets/${id}`, payload),
+
+  // Delete a set
+  // Ownership is verified using the JWT user ID on the backend.
   delete: (id) => axiosInstance.delete(`/sets/${id}`),
 };
 

@@ -83,7 +83,7 @@ export default function AddStudent() {
 
     useEffect(() => {
         const adminid = user?.id;
-        levelApi.getbyadminid(adminid).then(res => {
+        levelApi.getbyadminid().then(res => {
             const payload = res?.data ?? res;
             console.log("payload", payload.data)
             setLevels(Array.isArray(payload.data) ? payload.data : []);

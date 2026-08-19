@@ -26,9 +26,9 @@ export default function Masters() {
             <div className="p-6">
                 <Tabs
                     tabs={[
-                        { label: 'Sets', content: <Sets /> },
                         { label: 'Level', content: <Level /> },
-                         { label: 'Institute', content: <Institute /> }
+                        { label: 'Sets', content: <Sets /> },
+                        { label: 'Institute', content: <Institute /> }
                     ]}
                 />
             </div>
