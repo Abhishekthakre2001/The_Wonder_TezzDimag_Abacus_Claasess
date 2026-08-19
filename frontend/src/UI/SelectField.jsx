@@ -15,6 +15,7 @@ const SelectField = ({
   containerClassName = "",
   className = "",
   onBlur,
+  name="",
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -44,15 +45,33 @@ const SelectField = ({
   });
 
 
+  // const handleSelect = (option) => {
+  //   const selectedValue = typeof option === 'string' ? option : option.value;
+  //   onChange({ target: { value: selectedValue } }); // ✅ sends event-like object
+  //   // setTouched(true);
+  //   setSearch("");
+  //   setOpen(false);
+  //   onBlur?.();
+  // };
+
+
+
+
   const handleSelect = (option) => {
-    const selectedValue = typeof option === 'string' ? option : option.value;
-    onChange({ target: { value: selectedValue } }); // ✅ sends event-like object
-    // setTouched(true);
+    const selectedValue =
+        typeof option === "string" ? option : option.value;
+
+    onChange({
+        target: {
+            name,
+            value: selectedValue,
+        },
+    });
+
     setSearch("");
     setOpen(false);
     onBlur?.();
-  };
-
+};
   const handleFocus = () => {
     if (!disabled) {
       setOpen(true);

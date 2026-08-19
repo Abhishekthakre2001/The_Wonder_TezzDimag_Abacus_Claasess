@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from 'react'
-import StudentAppBar from '../../Components/Student/StudentAppBar';
-import Button from '../../UI/Button';
-import { CheckCircle2, AlertTriangle, Clock, FileText, Ban, Play, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import examScheduleApi from '../../api/examScheduleApi';
-import { useFetchData } from '../../hooks/useFetchData';
+import React, { useState, useEffect } from "react";
+import StudentAppBar from "../../Components/Student/StudentAppBar";
+import Button from "../../UI/Button";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  FileText,
+  Ban,
+  Play,
+  X,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import examScheduleApi from "../../api/examScheduleApi";
+import { useFetchData } from "../../hooks/useFetchData";
+import practiceResultApi from "../../api/practiceResult";
 
 export default function ExamRule() {
   const [isAgreed, setIsAgreed] = useState(false);
@@ -13,7 +22,7 @@ export default function ExamRule() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
 
   const { data: upcomeingexam, examscheduleloading } = useFetchData(() =>
-    examScheduleApi.getstudnetupcomeingexam(user.level, user.createdby)
+    examScheduleApi.getstudnetupcomeingexam(user.level, user.createdby),
   );
 
   useEffect(() => {
@@ -21,7 +30,7 @@ export default function ExamRule() {
       try {
         const res = await examScheduleApi.getLiveExam(
           user.level,
-          user.createdby
+          user.createdby,
         );
 
         const data = res.data;
@@ -37,7 +46,6 @@ export default function ExamRule() {
           localStorage.setItem("exam_id", exam.id);
           localStorage.setItem("examType", "live");
         }
-
       } catch (err) {
         console.error("Live exam fetch error ❌", err);
       }
@@ -52,34 +60,52 @@ export default function ExamRule() {
     {
       icon: Clock,
       title: "Time Management",
-      description: "Once the exam starts, the timer will begin. You must complete the exam within the allocated time. No extensions will be provided."
+      description:
+        "Once the exam starts, the timer will begin. You must complete the exam within the allocated time. No extensions will be provided.",
     },
     {
       icon: FileText,
       title: "No External Resources",
-      description: "Use of calculators, notes, books, or any external resources is strictly prohibited during the exam."
+      description:
+        "Use of calculators, notes, books, or any external resources is strictly prohibited during the exam.",
     },
     {
       icon: AlertTriangle,
       title: "No Tab Switching",
-      description: "Switching tabs or windows during the exam will be monitored. Multiple violations may result in automatic submission."
+      description:
+        "Switching tabs or windows during the exam will be monitored. Multiple violations may result in automatic submission.",
     },
     {
       icon: Ban,
       title: "No Communication",
-      description: "Communication with other students or any form of collaboration during the exam is strictly forbidden."
+      description:
+        "Communication with other students or any form of collaboration during the exam is strictly forbidden.",
     },
     {
       icon: CheckCircle2,
       title: "Review Before Submit",
-      description: "You can review and change your answers before final submission. Once submitted, you cannot modify your responses."
-    }
+      description:
+        "You can review and change your answers before final submission. Once submitted, you cannot modify your responses.",
+    },
   ];
 
-  const handleStartExam = () => {
-    if (isAgreed) {
-      console.log("Starting exam...");
-      // Navigate to exam page
+  const handleStartExam = async () => {
+    if (!isAgreed) return;
+    const examType = localStorage.getItem("exam");
+
+    if (examType === "Practice") {
+      const payload = {
+        paper_level: localStorage.getItem("paperlevel"),
+        paper_set: localStorage.getItem("paperset"),
+      };
+
+      const res = await practiceResultApi.startPracticeExam(payload);
+console.log("Ressss",res)
+      localStorage.setItem("practice_result_id", res?.data?.data?.result_id);
+
+      navigate("/exam-page");
+    } else {
+      navigate("/exam-page");
     }
   };
 
@@ -90,7 +116,7 @@ export default function ExamRule() {
 
   return (
     <>
-      <div className='max-w-full h-screen overflow-hidden flex flex-col'>
+      <div className="max-w-full h-screen overflow-hidden flex flex-col">
         <div className="m-2 mb-0 flex-shrink-0">
           <StudentAppBar
             title="Exam Rules & Regulations"
@@ -101,8 +127,13 @@ export default function ExamRule() {
         {/* Rules Section */}
         <div className="bg-white rounded-xl shadow-lg p-3 m-2 flex-1 overflow-y-auto">
           <div className="mb-3">
-            <h2 className="text-lg font-bold text-gray-800 mb-1">Important Instructions</h2>
-            <p className="text-gray-600 text-xs">Please carefully read and understand all the rules before proceeding.</p>
+            <h2 className="text-lg font-bold text-gray-800 mb-1">
+              Important Instructions
+            </h2>
+            <p className="text-gray-600 text-xs">
+              Please carefully read and understand all the rules before
+              proceeding.
+            </p>
           </div>
 
           {/* Single Card with All Rules */}
@@ -141,7 +172,9 @@ export default function ExamRule() {
                 className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer flex-shrink-0"
               />
               <span className="text-gray-700 text-xs font-medium">
-                I have read and understood all the exam rules and regulations. I agree to follow all the guidelines mentioned above and understand that any violation may result in disqualification.
+                I have read and understood all the exam rules and regulations. I
+                agree to follow all the guidelines mentioned above and
+                understand that any violation may result in disqualification.
               </span>
             </label>
           </div>
@@ -152,7 +185,7 @@ export default function ExamRule() {
               variant="secondary"
               size="md"
               icon={X}
-              onClick={() => navigate('/student-dashboard')}
+              onClick={() => navigate("/student-dashboard")}
             >
               Cancel
             </Button>
@@ -160,9 +193,8 @@ export default function ExamRule() {
               variant="primary"
               size="md"
               icon={Play}
-              onClick={() => navigate('/exam-page')}
+              onClick={handleStartExam}
               disabled={!isAgreed}
-
             >
               Start Exam
             </Button>
@@ -170,5 +202,5 @@ export default function ExamRule() {
         </div>
       </div>
     </>
-  )
+  );
 }

@@ -1,18 +1,11 @@
 const pool = require("../config/db");
 
 module.exports = {
-
   findById: (id) =>
-    pool.query(
-      `SELECT * FROM exam_schedule WHERE id = ?`,
-      [id]
-    ),
+    pool.query(`SELECT * FROM exam_schedule WHERE id = ?`, [id]),
 
   findByadmin: (id) =>
-    pool.query(
-      `SELECT * FROM exam_schedule WHERE createdby = ?`,
-      [id]
-    ),
+    pool.query(`SELECT * FROM exam_schedule WHERE createdby = ?`, [id]),
 
   create: async (data) => {
     // 1️⃣ Check questions exist
@@ -21,7 +14,7 @@ module.exports = {
      FROM questions
      WHERE level = ?
        AND set_id = ?`,
-      [data.exam_level, data.paper_set]
+      [data.exam_level, data.paper_set],
     );
 
     if (rows[0].total === 0) {
@@ -42,11 +35,10 @@ module.exports = {
         data.date,
         data.start_time,
         data.end_time,
-        data.createdby
-      ]
+        data.createdby,
+      ],
     );
   },
-
 
   findAll: () =>
     pool.query(`
@@ -67,9 +59,8 @@ WHERE exam_level = ?
 ORDER BY date, start_time;
 
     `,
-      [level, createdby]
+      [level, createdby],
     ),
-
 
   findByDate: (date) =>
     pool.query(
@@ -78,7 +69,7 @@ ORDER BY date, start_time;
        JOIN levels l ON l.id = es.exam_level
        WHERE es.date = ?
        ORDER BY es.start_time`,
-      [date]
+      [date],
     ),
 
   update: (id, data) =>
@@ -98,26 +89,23 @@ ORDER BY date, start_time;
         data.date,
         data.start_time,
         data.end_time,
-        id
-      ]
+        id,
+      ],
     ),
 
-  remove: (id) =>
-    pool.query(`DELETE FROM exam_schedule WHERE id = ?`, [id]),
+  remove: (id) => pool.query(`DELETE FROM exam_schedule WHERE id = ?`, [id]),
 
-findLiveExam: ({ level, createdby }) =>
-  pool.query(
-    `
+  findLiveExam: ({ level, createdby }) =>
+    pool.query(
+      `
     SELECT *
-    FROM exam_schedule
+    FROM exam_schedules
     WHERE exam_level = ?
       AND createdby = ?
       AND CONVERT_TZ(NOW(), '+00:00', '+05:30')
           BETWEEN start_time AND end_time
     LIMIT 1
     `,
-    [level, createdby]
-  ),
+      [level, createdby],
+    ),
 };
-
-

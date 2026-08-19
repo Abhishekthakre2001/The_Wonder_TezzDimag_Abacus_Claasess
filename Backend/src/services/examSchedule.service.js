@@ -42,7 +42,9 @@ const ExamScheduleService = {
     // Validate exam_category
     const validCategories = ["Abacus", "Vedic"];
     if (data.exam_category && !validCategories.includes(data.exam_category)) {
-      errors.push(`exam_category must be one of: ${validCategories.join(", ")}`);
+      errors.push(
+        `exam_category must be one of: ${validCategories.join(", ")}`,
+      );
     }
 
     // Validate exam_type
@@ -56,7 +58,6 @@ const ExamScheduleService = {
       errors,
     };
   },
-
 
   createExamSchedule: async (data, userId) => {
     const validation = ExamScheduleService.validateExamSchedule(data);
@@ -85,7 +86,6 @@ const ExamScheduleService = {
     return await ExamScheduleModel.create(examData);
   },
 
-
   getExamScheduleById: async (id, userId) => {
     const examSchedule = await ExamScheduleModel.findById(id, userId);
 
@@ -99,7 +99,6 @@ const ExamScheduleService = {
     return ExamScheduleService.parseExamSchedule(examSchedule);
   },
 
-
   getAllExamSchedules: async (userId, query) => {
     const limit = Math.min(parseInt(query.limit) || 10, 100);
     const page = parseInt(query.page) || 1;
@@ -110,13 +109,27 @@ const ExamScheduleService = {
     const exam_type = query.exam_type || "";
 
     const [examSchedules, total] = await Promise.all([
-      ExamScheduleModel.findAll(userId, limit, offset, search, exam_status, exam_category, exam_type),
-      ExamScheduleModel.countAll(userId, search, exam_status, exam_category, exam_type),
+      ExamScheduleModel.findAll(
+        userId,
+        limit,
+        offset,
+        search,
+        exam_status,
+        exam_category,
+        exam_type,
+      ),
+      ExamScheduleModel.countAll(
+        userId,
+        search,
+        exam_status,
+        exam_category,
+        exam_type,
+      ),
     ]);
 
     // Parse JSON columns
     const parsedData = examSchedules.map((exam) =>
-      ExamScheduleService.parseExamSchedule(exam)
+      ExamScheduleService.parseExamSchedule(exam),
     );
 
     return {
@@ -129,7 +142,6 @@ const ExamScheduleService = {
       },
     };
   },
-
 
   updateExamSchedule: async (id, userId, data) => {
     // Check if exam exists and belongs to user
@@ -184,7 +196,6 @@ const ExamScheduleService = {
     return ExamScheduleService.parseExamSchedule(updated);
   },
 
-
   deleteExamSchedule: async (id, userId) => {
     // Check if exam exists and belongs to user
     const exam = await ExamScheduleModel.findById(id, userId);
@@ -197,7 +208,6 @@ const ExamScheduleService = {
     return await ExamScheduleModel.delete(id, userId);
   },
 
-
   exportExamSchedules: async (userId, format = "json", query = {}) => {
     const search = query.search || "";
     const exam_status = query.exam_status || "";
@@ -209,12 +219,12 @@ const ExamScheduleService = {
       search,
       exam_status,
       exam_category,
-      exam_type
+      exam_type,
     );
 
     // Parse JSON columns
     const parsedData = examSchedules.map((exam) =>
-      ExamScheduleService.parseExamSchedule(exam)
+      ExamScheduleService.parseExamSchedule(exam),
     );
 
     if (format === "csv") {
@@ -224,20 +234,50 @@ const ExamScheduleService = {
     return parsedData;
   },
 
+  // parseExamSchedule: (exam) => {
+  //   console.log("Parsing exam schedule:", exam);
+  //   return {
+  //     ...exam,
+  //     exam_level: exam.exam_level ? JSON.parse(exam.exam_level) : [],
+  //     exam_set: exam.exam_set ? JSON.parse(exam.exam_set) : [],
+  //     exam_state: exam.exam_state ? JSON.parse(exam.exam_state) : [],
+  //     exam_district: exam.exam_district ? JSON.parse(exam.exam_district) : [],
+  //     exam_institute: exam.exam_institute ? JSON.parse(exam.exam_institute) : [],
+  //   };
+  // },
 
   parseExamSchedule: (exam) => {
-    console.log("Parsing exam schedule:", exam);
+    const parseField = (value) => {
+      if (value === null || value === undefined || value === "") {
+        return "";
+      }
+
+      try {
+        let parsed = JSON.parse(value);
+
+        while (typeof parsed === "string") {
+          try {
+            parsed = JSON.parse(parsed);
+          } catch {
+            break;
+          }
+        }
+
+        return parsed;
+      } catch {
+        return value;
+      }
+    };
+
     return {
       ...exam,
-      exam_level: exam.exam_level ? JSON.parse(exam.exam_level) : [],
-      exam_set: exam.exam_set ? JSON.parse(exam.exam_set) : [],
-      exam_state: exam.exam_state ? JSON.parse(exam.exam_state) : [],
-      exam_district: exam.exam_district ? JSON.parse(exam.exam_district) : [],
-      exam_institute: exam.exam_institute ? JSON.parse(exam.exam_institute) : [],
+      exam_level: parseField(exam.exam_level),
+      exam_set: parseField(exam.exam_set),
+      exam_state: parseField(exam.exam_state),
+      exam_district: parseField(exam.exam_district),
+      exam_institute: parseField(exam.exam_institute),
     };
   },
-
-
   convertToCSV: (examSchedules) => {
     if (examSchedules.length === 0) {
       return "id,exam_title,start_datetime,end_datetime,exam_status,exam_category,exam_type,created_by,created_at,updated_at\n";
@@ -287,17 +327,15 @@ const ExamScheduleService = {
     return csvContent;
   },
 
-
   getUpcomingAndLiveExams: async (userId) => {
+    console.log("userId", userId);
+    const exams = await ExamScheduleModel.getUpcomingAndLiveExams(userId);
 
-    console.log("userId",userId)
-  const exams = await ExamScheduleModel.getUpcomingAndLiveExams(userId);
-
-  return exams.map((exam) => ({
-    ...ExamScheduleService.parseExamSchedule(exam),
-    remark: exam.remark,
-  }));
-},
+    return exams.map((exam) => ({
+      ...ExamScheduleService.parseExamSchedule(exam),
+      remark: exam.remark,
+    }));
+  },
 };
 
 module.exports = ExamScheduleService;
